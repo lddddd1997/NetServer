@@ -10,3 +10,7 @@ $(TARGET) : $(OBJ)
 
 %.o : %.cpp
 	$(CC) $(CXX_FLAG) -c $< -o $@
+
+.PHONY : clean
+clean :
+	rm -rf *.o
