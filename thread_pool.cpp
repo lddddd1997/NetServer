@@ -1,7 +1,7 @@
 /**
 * @file     thread_pool.cpp
 * @brief    thread pool
-* @author   lddddd (lddddd1997@qq.com)
+* @author   lddddd (https://github.com/lddddd1997)
 */
 #include <thread_pool.h>
 #include <iostream>
@@ -46,7 +46,7 @@ void ThreadPool::Stop()
     condition_.notify_all();
 }
 
-void ThreadPool::CommitTask(Task task)
+void ThreadPool::CommitTask(const Task& task)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -55,22 +55,22 @@ void ThreadPool::CommitTask(Task task)
     condition_.notify_one();
 }
 
-void ThreadPool::ExtendPool(int thread_num)
+void ThreadPool::ExpandPool(int thread_num)
 {
     // TODO：线程池扩充
 }
 
-int ThreadPool::IdleThreadCount()
+int ThreadPool::IdleThreadCount() const
 {
     return idle_thread_num_;
 }
 
-int ThreadPool::ThreadCount()
+int ThreadPool::ThreadCount() const
 {
     return thread_num_;
 }
 
-int ThreadPool::TasksCount()
+int ThreadPool::WaitingTaskCount() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
     return task_queue_.size();
@@ -90,7 +90,7 @@ void ThreadPool::RunInThread(int thread_num)
             std::unique_lock<std::mutex> lock(mutex_);
             while(task_queue_.empty() && running_)
             {
-                condition_.wait(lock);
+                condition_.wait(lock); // 典型的生产者消费者模型，生产者生产任务，线程池消费任务
             }
             if(!running_)
             {
@@ -145,7 +145,7 @@ int main()
     Pool.CommitTask(test2);
     for(int i = 0; i < 10; i++)
     {
-        cout << Pool.IdleThreadCount() << " " << Pool.ThreadCount() << " " << Pool.TasksCount() << endl;
+        cout << Pool.IdleThreadCount() << " " << Pool.ThreadCount() << " " << Pool.WaitingTaskCount() << endl;
         sleep(1);
     }
     return 0;
