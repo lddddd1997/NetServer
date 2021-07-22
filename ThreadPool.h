@@ -26,10 +26,10 @@ public:
 
     void Start();
     void Stop();
-    void CommitTask(const Task& task); // 向线程池提交任务
+    void CommitTaskToPool(const Task& task); // 向线程池提交任务
     void ExpandPool(int thread_num); // 扩充线程池
-    int IdleThreadCount() const; // 获取空闲线程数量
-    int ThreadCount() const; // 获取线程总数量
+    int IdleThreadCount() const { return idle_thread_num_; } // 获取空闲线程数量
+    int ThreadCount() const { return thread_num_; } // 获取线程总数量
     int WaitingTaskCount() const; // 获取等待任务队列数量
 
 private:

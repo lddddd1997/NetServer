@@ -46,7 +46,7 @@ void ThreadPool::Stop()
     condition_.notify_all();
 }
 
-void ThreadPool::CommitTask(const Task& task)
+void ThreadPool::CommitTaskToPool(const Task& task)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -58,16 +58,6 @@ void ThreadPool::CommitTask(const Task& task)
 void ThreadPool::ExpandPool(int thread_num)
 {
     // TODO：线程池扩充
-}
-
-int ThreadPool::IdleThreadCount() const
-{
-    return idle_thread_num_;
-}
-
-int ThreadPool::ThreadCount() const
-{
-    return thread_num_;
 }
 
 int ThreadPool::WaitingTaskCount() const

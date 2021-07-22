@@ -20,9 +20,9 @@ public:
     ~Epoller();
 
     void EpollWait(int timeout_ms, ChannelList &active_channel_list);
-    void CommitChannel(Channel *channel);
-    void RemoveChannel(Channel *channel);
-    void UpdateChannel(Channel *channel);
+    void CommitChannelToEpoller(Channel *channel);
+    void RemoveChannelFromEpoller(Channel *channel);
+    void UpdateChannelInEpoller(Channel *channel);
 
 private:
     int epollfd_;

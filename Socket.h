@@ -17,8 +17,8 @@ public:
     ~Socket();
     Socket& operator=(const Socket&) = delete;
 
-    int Fd() const;
-    void SetReuseAddr(bool on); // 
+    int Fd() const { return sockfd_; }
+    void SetReuseAddr(bool on);
     void SetReusePort(bool on);
     void SetKeepAlive(bool on);
     void SetTcpNoDelay(bool on);

@@ -18,46 +18,6 @@ Channel::~Channel()
 
 }
 
-void Channel::SetFd(int fd)
-{
-    fd_ = fd;
-}
-
-int Channel::Fd() const
-{
-    return fd_;
-}
-
-void Channel::SetEvents(uint32_t events)
-{
-    events_ = events;
-}
-
-uint32_t Channel::Events() const
-{
-    return events_;
-}
-
-void Channel::SetReadHandle(const EventCallback& cb)
-{
-    read_callback_ = cb;
-}
-
-void Channel::SetWriteHandle(const EventCallback& cb)
-{
-    write_callback_ = cb;
-}
-
-void Channel::SetCloseHandle(const EventCallback& cb)
-{
-    close_callback_ = cb;
-}
-
-void Channel::SetErrorHandle(const EventCallback& cb)
-{
-    error_callback_ = cb;
-}
-
 void Channel::HandleEvents()
 {
     if(events_ & EPOLLRDHUP) // 对端正常关闭（close()，或ctrl+c），触发EPOLLIN和EPOLLRDHUP，故将其放第一

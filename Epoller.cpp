@@ -48,12 +48,12 @@ void Epoller::EpollWait(int timeout_ms, ChannelList &active_channel_list)
 
 }
 
-void Epoller::CommitChannel(Channel *channel)
+void Epoller::CommitChannelToEpoller(Channel *channel)
 {
     int fd = channel->Fd();
     struct epoll_event evt;
     evt.events = channel->Events();
-    evt.data.ptr = channel;
+    evt.data.ptr = channel; // 浅拷贝
     channel_map_[fd] = channel;
     if(epoll_ctl(epollfd_, EPOLL_CTL_ADD, fd, &evt) == -1)
     {
@@ -62,7 +62,7 @@ void Epoller::CommitChannel(Channel *channel)
     }
 }
 
-void Epoller::RemoveChannel(Channel *channel)
+void Epoller::RemoveChannelFromEpoller(Channel *channel)
 {
     int fd = channel->Fd();
     struct epoll_event evt;
@@ -76,7 +76,7 @@ void Epoller::RemoveChannel(Channel *channel)
     }
 }
 
-void Epoller::UpdateChannel(Channel *channel)
+void Epoller::UpdateChannelInEpoller(Channel *channel)
 {
 int fd = channel->Fd();
     struct epoll_event evt;

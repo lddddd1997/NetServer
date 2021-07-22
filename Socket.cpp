@@ -26,11 +26,6 @@ Socket::~Socket()
     std::cout << "socket close..." << std::endl;
 }
 
-int Socket::Fd() const
-{
-    return sockfd_;
-}
-
 void Socket::SetReuseAddr(bool on)
 {
     int opt = on ? 1 : 0;
