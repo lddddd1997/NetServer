@@ -16,15 +16,45 @@ public:
     Channel();
     ~Channel();
 
-    void SetFd(int fd) { fd_ = fd; }
-    int Fd() const { return fd_; }
-    void SetEvents(uint32_t events) { events_ = events; }
-    uint32_t Events() const { return events_; }
+    void SetFd(int fd)
+    {
+        fd_ = fd;
+    }
 
-    void SetReadHandle(const EventCallback& cb) { read_callback_ = cb; }
-    void SetWriteHandle(const EventCallback& cb) { write_callback_ = cb; }
-    void SetErrorHandle(const EventCallback& cb) { close_callback_ = cb; }
-    void SetCloseHandle(const EventCallback& cb) { error_callback_ = cb; }
+    int Fd() const
+    {
+        return fd_;
+    }
+
+    void SetEvents(uint32_t events)
+    {
+        events_ = events;
+    }
+
+    uint32_t Events() const
+    {
+        return events_;
+    }
+
+    void SetReadHandle(const EventCallback& cb)
+    {
+        read_callback_ = cb;
+    }
+
+    void SetWriteHandle(const EventCallback& cb)
+    {
+        write_callback_ = cb;
+    }
+
+    void SetErrorHandle(const EventCallback& cb)
+    {
+        close_callback_ = cb;
+    }
+
+    void SetCloseHandle(const EventCallback& cb)
+    {
+        error_callback_ = cb;
+    }
 
     void HandleEvents();
 

@@ -8,7 +8,6 @@
 #include <iostream>
 
 Epoller::Epoller() :
-    epollfd_(-1),
     event_list_(EVENTLISTSIZE)
 {
     epollfd_ = epoll_create1(EPOLL_CLOEXEC); // epoll_create

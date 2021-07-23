@@ -9,9 +9,7 @@
 ThreadPool::ThreadPool(int thread_num) :
     thread_num_(thread_num),
     idle_thread_num_(thread_num),
-    running_(false),
-    mutex_(),
-    condition_()
+    running_(false)
 {
 
 }
@@ -40,12 +38,6 @@ void ThreadPool::Start()
     }
 }
 
-void ThreadPool::Stop()
-{
-    running_ = false;
-    condition_.notify_all();
-}
-
 void ThreadPool::CommitTaskToPool(const Task& task)
 {
     {
@@ -58,12 +50,6 @@ void ThreadPool::CommitTaskToPool(const Task& task)
 void ThreadPool::ExpandPool(int thread_num)
 {
     // TODO：线程池扩充
-}
-
-int ThreadPool::WaitingTaskCount() const
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    return task_queue_.size();
 }
 
 void ThreadPool::RunInThread(int thread_num)
@@ -122,7 +108,7 @@ void test2()
 {
     for(int i = 0; i < 10; i++)
     {
-        Pool.CommitTask(test1);
+        Pool.CommitTaskToPool(test1);
         usleep(rand() % 1000000);
     }
 }
@@ -132,10 +118,10 @@ int main()
     
     Pool.Start();
     sleep(1);
-    Pool.CommitTask(test2);
+    Pool.CommitTaskToPool(test2);
     for(int i = 0; i < 10; i++)
     {
-        cout << Pool.IdleThreadCount() << " " << Pool.ThreadCount() << " " << Pool.WaitingTaskCount() << endl;
+        cout << Pool.IdleThreadsCount() << " " << Pool.ThreadsCount() << " " << Pool.PendingTasksCount() << endl;
         sleep(1);
     }
     return 0;
