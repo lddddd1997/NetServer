@@ -77,7 +77,7 @@ void EventLoop::CommitTaskToLoop(const Task& task)
             task_list_.push_back(task); 
         }
         //std::cout << "WakeUp" << std::endl;
-        Wakeup(); //跨线程唤醒，worker线程唤醒IO线程
+        Wakeup(); // 跨线程唤醒，worker线程唤醒IO线程
 }
 
 void EventLoop::ExecutePendingTasks()
@@ -85,12 +85,11 @@ void EventLoop::ExecutePendingTasks()
     TaskList task_list;
     {
         std::lock_guard <std::mutex> lock(mutex_);
-        task_list.swap(task_list_);
+        task_list.swap(task_list_); // 交换后再操作，减少锁的作用范围
     }
     for(const Task& task : task_list)
     {
         task();
     }
-
 }
 
