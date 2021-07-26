@@ -17,14 +17,16 @@ ThreadPool::ThreadPool(int thread_num) :
 ThreadPool::~ThreadPool()
 {
     Stop();
+    std::cout << "Clean up the business thread pool " << std::endl;
+    // for(int i = 0; i < thread_num_; i++)
+    // {
+    //     // thread_list_[i]->detach();
+    //     thread_list_[i]->join();
+    // }
+    for(std::unique_ptr<std::thread>& thread : thread_list_)
     {
-        std::lock_guard<std::mutex> lock(mutex_);
-        std::cout << "Clean up the ThreadPool " << std::endl;
-    }
-    for(int i = 0; i < thread_num_; i++)
-    {
-        // thread_list_[i]->detach();
-        thread_list_[i]->join();
+        // thread->detach();
+        thread->join();
     }
 }
 
@@ -57,7 +59,7 @@ void ThreadPool::RunInThread(int thread_num)
     std::thread::id tid = std::this_thread::get_id();
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        std::cout << "The " << thread_num << "th thread is running, thread id = " << tid << std::endl;
+        std::cout << "The " << thread_num << "th business thread is running, thread id = " << tid << std::endl;
     }
     Task task;
     while(running_)

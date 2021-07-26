@@ -1,6 +1,6 @@
 /**
 * @file     EventLoop.cpp
-* @brief    event loop
+* @brief    事件循环封装
 * @author   lddddd (https://github.com/lddddd1997)
 */
 #include <EventLoop.h>
@@ -11,7 +11,7 @@
 EventLoop::EventLoop() :
     looping_(false),
     quit_(true),
-    tid_(std::this_thread::get_id())
+    thread_id_(std::this_thread::get_id())
 {
     wakeupfd_ = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
     if(wakeupfd_ == -1)
@@ -21,8 +21,8 @@ EventLoop::EventLoop() :
     }
     wakeup_channel_.SetFd(wakeupfd_);
     wakeup_channel_.SetEvents(EPOLLIN | EPOLLET);
-    wakeup_channel_.SetReadHandle(std::bind(&EventLoop::HandleRead, this));
-    CommitChannelToEpoller(&wakeup_channel_);
+    wakeup_channel_.SetReadHandle(std::bind(&EventLoop::WakeupHandleRead, this));
+    CommitChannelToEpoller(&wakeup_channel_); // 将事件通知加入epoller中
 }
 
 EventLoop::~EventLoop()
@@ -30,24 +30,35 @@ EventLoop::~EventLoop()
     close(wakeupfd_);
 }
 
-void EventLoop::Loop()
+void EventLoop::Looping()
 {
     looping_ = true;
     quit_ = false;
-    std::cout << "Start looping..." << std::endl;
+    // std::cout << ThreadId() <<  " " << "start looping..." << std::endl;
 
     while(!quit_)
     {
         active_channel_list_.clear();
-        epoller_.EpollWait(5000, active_channel_list_);
-        for(Channel* channel : active_channel_list_)
+        epoller_.EpollWait(EPOLLTIMEOUT, active_channel_list_);
+        for(Channel *channel : active_channel_list_)
         {
             current_active_channel_ = channel;
-            current_active_channel_->HandleEvents();
+            current_active_channel_->HandleEvents(); // 执行活跃事件的回调
         }
         current_active_channel_ = nullptr;
-        ExecutePendingTasks();
+        ExecutePendingTasks(); // 执行任务
     }
+    looping_ = false;
+}
+
+void EventLoop::CommitTaskToLoop(const Task& task)
+{
+        {
+            std::lock_guard <std::mutex> lock(mutex_);                    
+            task_list_.push_back(task); 
+        }
+        //std::cout << "WakeUp" << std::endl;
+        Wakeup(); // 跨线程唤醒，worker线程唤醒IO线程
 }
 
 void EventLoop::Wakeup()
@@ -60,7 +71,7 @@ void EventLoop::Wakeup()
     }
 }
 
-void EventLoop::HandleRead()
+void EventLoop::WakeupHandleRead()
 {
     uint64_t one = 1;
     ssize_t n = read(wakeupfd_, &one, sizeof(one));
@@ -68,16 +79,6 @@ void EventLoop::HandleRead()
     {
         perror("EventLoop::Wakeup");
     }
-}
-
-void EventLoop::CommitTaskToLoop(const Task& task)
-{
-        {
-            std::lock_guard <std::mutex> lock(mutex_);                    
-            task_list_.push_back(task); 
-        }
-        //std::cout << "WakeUp" << std::endl;
-        Wakeup(); // 跨线程唤醒，worker线程唤醒IO线程
 }
 
 void EventLoop::ExecutePendingTasks()
