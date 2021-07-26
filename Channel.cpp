@@ -1,6 +1,6 @@
 /**
 * @file     Channel.cpp
-* @brief    channel
+* @brief    事件的封装Channel
 * @author   lddddd (https://github.com/lddddd1997)
 */
 #include <Channel.h>
@@ -8,7 +8,9 @@
 #include <sys/epoll.h>
 
 Channel::Channel() :
-    fd_(-1)
+    fd_(-1),
+    events_(0),
+    revents_(0)
 {
     
 }
@@ -20,7 +22,7 @@ Channel::~Channel()
 
 void Channel::HandleEvents()
 {
-    if(events_ & EPOLLRDHUP) // 对端正常关闭（close()，或ctrl+c），触发EPOLLIN和EPOLLRDHUP，故将其放第一
+    if(revents_ & EPOLLRDHUP) // 对端正常关闭（close()，或ctrl+c），触发EPOLLIN和EPOLLRDHUP，故将其放第一
     {
         std::cout << "Event EPOLLRDHUP" << std::endl;
         if(close_callback_)
@@ -32,7 +34,7 @@ void Channel::HandleEvents()
             std::cout << "Lack of close_callback_" << std::endl;
         }
     }
-    else if(events_ & EPOLLIN) // 可读
+    else if(revents_ & EPOLLIN) // 可读
     {
         std::cout << "Event EPOLLIN" << std::endl;
         if(read_callback_)
@@ -44,7 +46,7 @@ void Channel::HandleEvents()
             std::cout << "Lack of read_callback_" << std::endl;
         }
     }
-    else if(events_ & EPOLLOUT) // 可写
+    else if(revents_ & EPOLLOUT) // 可写
     {
         if(write_callback_)
         {
@@ -55,7 +57,7 @@ void Channel::HandleEvents()
             std::cout << "Lack of write_callback_" << std::endl;
         }
     }
-    else if(events_ & EPOLLPRI) // 带外数据
+    else if(revents_ & EPOLLPRI) // 带外数据
     {
         
     }
