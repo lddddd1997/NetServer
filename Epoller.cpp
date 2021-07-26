@@ -1,6 +1,6 @@
 /**
 * @file     Epoller.cpp
-* @brief    epoller
+* @brief    多路IO复用接口epoll的封装Epoller
 * @author   lddddd (https://github.com/lddddd1997)
 */
 #include <Epoller.h>
@@ -24,13 +24,13 @@ Epoller::~Epoller()
     close(epollfd_);
 }
 
-void Epoller::EpollWait(int timeout_ms, ChannelList &active_channel_list)
+void Epoller::EpollWait(int timeout_ms, ChannelPtrList &active_channel_list)
 {
     int nfds = epoll_wait(epollfd_, &*event_list_.begin(), static_cast<int>(event_list_.size()), timeout_ms);
     if(nfds > 0)
     {
-        FilleActiveChannels(nfds, active_channel_list);
-        if(nfds == static_cast<int>(event_list_.size()))
+        FilleActiveChannels(nfds, active_channel_list); // 填充活跃事件到传出参数active_channel_list
+        if(nfds == static_cast<int>(event_list_.size())) // 扩充events数组
         {
             event_list_.resize(event_list_.size() * 2);
         }
@@ -42,7 +42,7 @@ void Epoller::EpollWait(int timeout_ms, ChannelList &active_channel_list)
     else
     {
         perror("Epoller::EpollWait");
-        exit(EXIT_FAILURE);
+        // exit(EXIT_FAILURE);
     }
 
 }
@@ -89,17 +89,15 @@ int fd = channel->Fd();
     }
 }
 
-void Epoller::FilleActiveChannels(int nfds, ChannelList &active_channel_list)
+void Epoller::FilleActiveChannels(int nfds, ChannelPtrList &active_channel_list)
 {
     for(int i = 0; i < nfds; i++)
     {
         Channel *channel = static_cast<Channel*>(event_list_[i].data.ptr);
-        int fd = channel->Fd();
-        int events = channel->Events();
-        std::map<int, Channel*>::const_iterator it = channel_map_.find(fd);
+        std::map<int, Channel*>::const_iterator it = channel_map_.find(channel->Fd());
         if(it != channel_map_.end())
         {
-            channel->SetEvents(events);
+            channel->SetRevents(event_list_[i].events); // 设置epoll的触发事件
             active_channel_list.push_back(channel);
         }
         else
