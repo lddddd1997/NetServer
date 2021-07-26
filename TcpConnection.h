@@ -15,9 +15,10 @@
 class TcpConnection : public std::enable_shared_from_this<TcpConnection>
 {
 public:
-    using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
-    using Callback = std::function<void(const TcpConnectionPtr&)>;
-    using MessageCallback = std::function<void(const TcpConnectionPtr&, std::string&)>;
+    using ChannelUPtr = std::unique_ptr<Channel>;
+    using TcpConnectionSPtr = std::shared_ptr<TcpConnection>;
+    using Callback = std::function<void(const TcpConnectionSPtr&)>;
+    using MessageCallback = std::function<void(const TcpConnectionSPtr&, std::string&)>;
 
     TcpConnection(EventLoop *loop, int fd_,
                   const struct sockaddr_in& local_addr, const struct sockaddr_in& peer_addr);
@@ -25,7 +26,8 @@ public:
     
     int Fd() const
     {
-        return fd_;
+        // return fd_;
+        return channel_->Fd();
     }
 
     EventLoop *Loop() const
@@ -42,7 +44,7 @@ public:
 private:
     // int fd_;
     EventLoop *loop_;
-    std::unique_ptr<Channel> channel_;
+    ChannelUPtr channel_;
     // const struct sockaddr_in local_addr_;
     // const struct sockaddr_in Peer_addr_;
     struct sockaddr_in local_addr_;
