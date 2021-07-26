@@ -1,6 +1,6 @@
 /**
 * @file     EventLoopThreadPool.h
-* @brief    event loop thread pool
+* @brief    event loop线程池
 * @author   lddddd (https://github.com/lddddd1997)
 */
 
@@ -14,17 +14,18 @@
 class EventLoopThreadPool
 {
 public:
-    using ThreadList = std::vector<std::unique_ptr<EventLoopThread>>;
+    using ThreadUPtrList = std::vector<std::unique_ptr<EventLoopThread>>;
 
     EventLoopThreadPool(EventLoop *base_loop, int thread_num);
     ~EventLoopThreadPool();
-    void Start();
-    EventLoop* GetNextLoop();
+
+    void Start(); // 启动线程池
+    EventLoop* GetNextLoop(); // round robin轮询分发loop
 private:
-    int thread_num_;
-    int index_;
-    EventLoop *base_loop_;
-    ThreadList thread_list_;
+    int thread_num_; // 线程数量
+    int index_; // 轮询分发的索引
+    EventLoop *base_loop_; // 主loop
+    ThreadUPtrList thread_list_; // 线程列表
 };
 
 

@@ -1,9 +1,10 @@
 /**
 * @file     EventLoopThreadPool.cpp
-* @brief    event loop thread pool
+* @brief    event loop线程池
 * @author   lddddd (https://github.com/lddddd1997)
 */
 #include <EventLoopThreadPool.h>
+#include <iostream>
 
 EventLoopThreadPool::EventLoopThreadPool(EventLoop *base_loop, int thread_num) :
     thread_num_(thread_num),
@@ -15,7 +16,7 @@ EventLoopThreadPool::EventLoopThreadPool(EventLoop *base_loop, int thread_num) :
 
 EventLoopThreadPool::~EventLoopThreadPool()
 {
-
+    std::cout << "Clean up the IO thread pool " << std::endl;
 }
 
 void EventLoopThreadPool::Start()
@@ -28,9 +29,9 @@ void EventLoopThreadPool::Start()
     }
 }
 
-EventLoop* EventLoopThreadPool::GetNextLoop()
+EventLoop* EventLoopThreadPool::GetNextLoop() // round robin轮询调度
 {
-    EventLoop* loop = base_loop_;
+    EventLoop *loop = base_loop_; // 若IO线程数量为0，则分配主loop
     if(!thread_list_.empty())
     {
         loop = thread_list_[index_]->Loop();
