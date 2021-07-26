@@ -4,9 +4,10 @@
 #include <iostream>
 #include <unistd.h>
 #include <signal.h>
+#include <EventLoopThreadPool.h>
 using namespace std;
 
-using ChannelList = std::vector<Channel*>;
+using ChannelPtrList = std::vector<Channel*>;
 
 int qq = 0;
 void quit(int sig)
@@ -14,45 +15,77 @@ void quit(int sig)
     qq = 1;
 }
 
+class EchoConn
+{
+public:
+    EchoConn(int fd) : fd_(fd)
+    {
+
+    }
+    
+    void ReadHandle()
+    {
+        cout << "cfd = " << fd_ << endl;
+        char buf[1024];
+        int n = read(fd_, buf, 1024);
+        write(STDOUT_FILENO, buf, n);
+    }
+    void CloseHandle()
+    {
+        close(fd_);
+    }
+private:
+    int fd_;
+};
+
 int main()
 {
     signal(SIGINT, quit);
     Socket Socket;
-    Socket.BindAddress(8888);
     Socket.SetReuseAddr(true);
+    Socket.BindAddress(8888);
     Socket.SetListen();
     
+    map<int, Channel*> channel_map;
     ThreadPool Pool(4);
+    // EventLoop base_loop;
+    EventLoopThreadPool ELPool(nullptr, 4);
     Pool.Start();
-    Channel chan1, chan2;
+    ELPool.Start();
+    Channel chan;
     Epoller Epoller;
-    chan1.SetFd(Socket.Fd());
-    chan1.SetEvents(EPOLLIN | EPOLLET);
-    chan1.SetReadHandle([&Socket, &Epoller, &chan2](){
+    chan.SetFd(Socket.Fd());
+    chan.SetEvents(EPOLLIN | EPOLLET);
+    chan.SetReadHandle([&Socket, &Epoller, &channel_map](){
         struct sockaddr_in client_addr;
         int cfd = Socket.Accept(client_addr);
         cout << "--------------Client connection " << inet_ntoa(client_addr.sin_addr) << 
         ":" << ntohs(client_addr.sin_port) << " cfd = " << cfd <<  endl;
-        chan2.SetFd(cfd);
-        chan2.SetEvents(EPOLLRDHUP | EPOLLIN | EPOLLET);
+        channel_map[cfd] = new Channel;
 
-        chan2.SetReadHandle([cfd](){
+        channel_map[cfd]->SetFd(cfd);
+        channel_map[cfd]->SetEvents(EPOLLRDHUP | EPOLLIN | EPOLLET);
+
+        channel_map[cfd]->SetReadHandle([cfd, &channel_map](){
+                cout << "cfd = " << cfd << endl;
                 char buf[1024];
                 int n = read(cfd, buf, 1024);
                 write(STDOUT_FILENO, buf, n);
             });
 
-        chan2.SetCloseHandle([cfd](){
-            cout << "close handle" << endl;
-            close(cfd);
-            // Epoller.remove
+        channel_map[cfd]->SetCloseHandle([cfd, &channel_map, &Epoller](){
+                Epoller.RemoveChannelFromEpoller(channel_map[cfd]);
+                channel_map.erase(cfd);
+                close(cfd);
+                cout << "close handle: " << cfd << endl;
+                delete channel_map[cfd];
             });
             
-        Epoller.CommitChannelToEpoller(&chan2);
+        Epoller.CommitChannelToEpoller(channel_map[cfd]);
         });
     
     
-    Epoller.CommitChannelToEpoller(&chan1);
+    Epoller.CommitChannelToEpoller(&chan);
 
     // Epoller Epoller;
     // {
@@ -63,7 +96,7 @@ int main()
     // Epoller.CommitChannelToEpoller(&chan1);
     // }
     
-    ChannelList chlist;
+    ChannelPtrList chlist;
     sleep(1);
     while(qq == 0)
     {
