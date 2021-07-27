@@ -1,6 +1,6 @@
 /**
 * @file     Socket.cpp
-* @brief    socket
+* @brief    socket封装
 * @author   lddddd (https://github.com/lddddd1997)
 */
 #include <Socket.h>
