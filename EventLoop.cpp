@@ -53,12 +53,18 @@ void EventLoop::Looping()
 
 void EventLoop::CommitTaskToLoop(const Task& task)
 {
-        {
-            std::lock_guard <std::mutex> lock(mutex_);                    
-            task_list_.push_back(task); 
-        }
-        //std::cout << "WakeUp" << std::endl;
-        Wakeup(); // 跨线程唤醒，worker线程唤醒IO线程
+    // std::cout << "commit id: " << std::this_thread::get_id() << " loop id: " << ThreadId() << std::endl;
+    if(IsInLoopThread()) // 如果在当前线程，则直接执行任务，减少IO次数
+    {
+        task();
+        return ;
+    }
+    {
+        std::lock_guard <std::mutex> lock(mutex_);                    
+        task_list_.push_back(task); 
+    }
+    //std::cout << "WakeUp" << std::endl;
+    Wakeup(); // 跨线程唤醒，worker线程唤醒IO线程
 }
 
 void EventLoop::Wakeup()
@@ -88,6 +94,7 @@ void EventLoop::ExecutePendingTasks()
         std::lock_guard <std::mutex> lock(mutex_);
         task_list.swap(task_list_); // 交换后再操作，减少锁的作用范围
     }
+    // std::cout << "task_list size: " << task_list.size() << std::endl;
     for(const Task& task : task_list)
     {
         task();

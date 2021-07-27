@@ -27,12 +27,17 @@ public:
     void Quit() // 退出事件循环
     {
         quit_ = true;
-        // Wakeup(); // 唤醒loop中的epollwait，加快退出
+        // Wakeup(); // 唤醒loop中的epoll_wait，加快退出
     }
 
     std::thread::id ThreadId() const // 获取loop所在的线程ID
     {
         return thread_id_;
+    }
+
+    bool IsInLoopThread() const
+    {
+        return thread_id_ == std::this_thread::get_id();
     }
 
     void CommitChannelToEpoller(Channel *channel) // 提交channel到epoller中
@@ -56,14 +61,14 @@ private:
     std::atomic<bool> looping_; // loop运行状态
     std::atomic<bool> quit_; // 事件循环退出状态
     int wakeupfd_; // 事件通知文件描述符
-    static const int EPOLLTIMEOUT = 1000; // epollwait的超时时间
+    static const int EPOLLTIMEOUT = 1000; // epoll_wait的超时时间
     std::thread::id thread_id_; // loop所在的线程ID
     Epoller epoller_;
     ChannelPtrList active_channel_list_; // 活跃事件列表
     Channel *current_active_channel_; // 当前正在处理的活跃事件
     TaskList task_list_; // 任务列表
     Channel wakeup_channel_; // 事件通知channel
-    std::mutex mutex_; 
+    std::mutex mutex_;  // 用于保护任务列表
 
     void Wakeup(); // 事件通知，唤醒loop
     void WakeupHandleRead(); // 唤醒后的读回调
