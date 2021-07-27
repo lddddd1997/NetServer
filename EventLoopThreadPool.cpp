@@ -25,7 +25,7 @@ void EventLoopThreadPool::Start()
     for(int i = 0; i < thread_num_; i++)
     {
         thread_list_.emplace_back(new EventLoopThread);
-        thread_list_[i]->Start();
+        loop_list_.push_back(thread_list_[i]->StartLoop());
     }
 }
 
@@ -34,7 +34,7 @@ EventLoop* EventLoopThreadPool::GetNextLoop() // round robin轮询调度
     EventLoop *loop = base_loop_; // 若IO线程数量为0，则分配主loop
     if(!thread_list_.empty())
     {
-        loop = thread_list_[index_]->Loop();
+        loop = loop_list_[index_];
         index_ = (index_ + 1) % thread_num_;
     }
     return loop;
