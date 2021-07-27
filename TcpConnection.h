@@ -20,7 +20,7 @@ public:
     using Callback = std::function<void(const TcpConnectionSPtr&)>;
     using MessageCallback = std::function<void(const TcpConnectionSPtr&, std::string&)>;
 
-    TcpConnection(EventLoop *loop, int fd_,
+    TcpConnection(EventLoop *loop, int fd,
                   const struct sockaddr_in& local_addr, const struct sockaddr_in& peer_addr);
     ~TcpConnection();
     
@@ -45,10 +45,10 @@ private:
     // int fd_;
     EventLoop *loop_;
     ChannelUPtr channel_;
-    // const struct sockaddr_in local_addr_;
-    // const struct sockaddr_in Peer_addr_;
-    struct sockaddr_in local_addr_;
-    struct sockaddr_in peer_addr_;
+    const struct sockaddr_in local_addr_;
+    const struct sockaddr_in peer_addr_;
+    // struct sockaddr_in local_addr_;
+    // struct sockaddr_in peer_addr_;
     std::string buffer_in_;
     std::string buffer_out_; 
     
