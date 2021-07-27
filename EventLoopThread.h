@@ -8,6 +8,8 @@
 
 #include <thread>
 #include <EventLoop.h>
+#include <mutex>
+#include <condition_variable>
 
 class EventLoopThread
 {
@@ -15,11 +17,7 @@ public:
     EventLoopThread();
     ~EventLoopThread();
 
-    void Start(); // 启动线程
-    EventLoop* Loop() // 获取当前线程的loop
-    {
-        return loop_;
-    }
+    EventLoop* StartLoop(); // 启动线程，并获取当前线程的loop
 
 private:
     std::thread thread_; // 线程
@@ -27,6 +25,9 @@ private:
 
     EventLoop *loop_; // 线程运行的loop循环
     void RunInThread(); // 线程执行的函数
+
+    std::mutex mutex_;
+    std::condition_variable condition_; // 用于通知loop_在线程中创建成功
 };
 
 #endif
