@@ -22,7 +22,7 @@ Channel::~Channel()
 
 void Channel::HandleEvents()
 {
-    if(revents_ & EPOLLRDHUP) // 对端正常关闭（close()，或ctrl+c），触发EPOLLIN和EPOLLRDHUP，故将其放第一
+    if(revents_ & EPOLLRDHUP) // 对端正常关闭（close，或ctrl+c，或SHUT_WR，SHUT_RDWR），触发EPOLLIN和EPOLLRDHUP，故优先处理
     {
         std::cout << "Event EPOLLRDHUP" << std::endl;
         if(close_callback_)
@@ -33,8 +33,21 @@ void Channel::HandleEvents()
         {
             std::cout << "Lack of close_callback_" << std::endl;
         }
+        // return ; // 对端关闭后，不处理其它事件
     }
-    else if(revents_ & EPOLLIN) // 可读
+    if(revents_ & EPOLLERR)
+    {
+        if(error_callback_)
+        {
+            error_callback_();
+        }
+        else
+        {
+            std::cout << "Lack of error_callback_" << std::endl;
+        }
+        return ;
+    }
+    if(revents_ & (EPOLLIN | EPOLLPRI)) // 可读或带外数据
     {
         std::cout << "Event EPOLLIN" << std::endl;
         if(read_callback_)
@@ -46,7 +59,7 @@ void Channel::HandleEvents()
             std::cout << "Lack of read_callback_" << std::endl;
         }
     }
-    else if(revents_ & EPOLLOUT) // 可写
+    if(revents_ & EPOLLOUT) // 可写
     {
         if(write_callback_)
         {
@@ -57,19 +70,5 @@ void Channel::HandleEvents()
             std::cout << "Lack of write_callback_" << std::endl;
         }
     }
-    else if(revents_ & EPOLLPRI) // 带外数据
-    {
-        
-    }
-    else
-    {
-        if(error_callback_)
-        {
-            error_callback_();
-        }
-        else
-        {
-            std::cout << "Lack of error_callback_" << std::endl;
-        }
-    }
+
 }
