@@ -3,14 +3,15 @@
 * @brief    tcp connection
 * @author   lddddd (https://github.com/lddddd1997)
 */
-
 #include <TcpConnection.h>
 #include <unistd.h>
 #include <Utilities.h>
 #include <iostream>
+#include <assert.h>
 
 TcpConnection::TcpConnection(EventLoop *loop, int fd,
                   const struct sockaddr_in& local_addr, const struct sockaddr_in& peer_addr) :
+    disconnected_(true),
     loop_(loop),
     channel_(new Channel()),
     local_addr_(local_addr),
@@ -24,11 +25,12 @@ TcpConnection::TcpConnection(EventLoop *loop, int fd,
     channel_->SetErrorHandle(std::bind(&TcpConnection::HandleError, this));
 }
 
-TcpConnection::~TcpConnection()
+TcpConnection::~TcpConnection() // TcpConnection的shared_ptr对象引用计数为0
 {
     // loop_->RemoveChannelFromEpoller(channel_.get()); // 从该loop的epoller中删除channel事件，此时必定处于该loop_线程
     loop_->CommitTaskToLoop(std::bind(&EventLoop::RemoveChannelFromEpoller, loop_, channel_.get())); // CommitTaskToLoop内部判断，如果处于当前loop_线程，则直接执行任务，否则投递到loop_线程的任务队列等待执行
     close(channel_->Fd());
+    assert(disconnected_); // 确认是否已经关闭
 }
 
 void TcpConnection::ConnectEstablished()
@@ -36,6 +38,7 @@ void TcpConnection::ConnectEstablished()
     // https://blog.csdn.net/u011344601/article/details/51997886?utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromMachineLearnPai2%7Edefault-4.control&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromMachineLearnPai2%7Edefault-4.control
     // loop_->CommitChannelToEpoller(channel_.get()); // base_loop线程执行，可能导致loop_的epoller的线程安全问题（loop_线程epoll_wait时，base_loop线程调用loop_的epoll_ctl）
     loop_->CommitTaskToLoop(std::bind(&EventLoop::CommitChannelToEpoller, loop_, channel_.get())); // 故加入任务队列，由loop_线程执行添加，此时loop_必定不会处于epoll_wait
+    disconnected_ = false;
 }
 
 void TcpConnection::Send(const std::string& str)
@@ -46,6 +49,10 @@ void TcpConnection::Send(const std::string& str)
 
 void TcpConnection::SendInLoop()
 {
+    if(disconnected_)
+    {
+        return ;
+    }
     int nwrite = Utilities::Writen(channel_->Fd(), buffer_out_);
     if(nwrite > 0)
     {
@@ -56,7 +63,7 @@ void TcpConnection::SendInLoop()
             // loop_->CommitTaskToLoop(std::bind(&EventLoop::UpdateChannelInEpoller, loop_, channel_.get()));
             write_complete_callback_(shared_from_this());
 
-            // TODO:半关闭
+            // TODO:半关闭，如果对端关闭后服务端继续写会发送SIGPIPE，导致服务端退出？
 
         }
         else // 系统缓冲区满了，并且数据没发完，设置EPOLLOUT事件触发
@@ -86,14 +93,23 @@ void TcpConnection::Shutdown()
 
 void TcpConnection::ShutdownInLoop()
 {
+    if(disconnected_)
+    {
+        return ;
+    }
     std::cout << "shutdown" << std::endl;
     close_callback_(shared_from_this());
-    loop_->CommitTaskToLoop(std::bind(&EventLoop::RemoveChannelFromEpoller, loop_, channel_.get()));
-    loop_->CommitTaskToLoop(std::bind(connection_cleanup_, shared_from_this()));
+    // loop_->CommitTaskToLoop(std::bind(&EventLoop::RemoveChannelFromEpoller, loop_, channel_.get()));
+    loop_->CommitTaskToLoop(std::bind(connection_cleanup_, shared_from_this())); // 上层Server层清理（从tcp连接表中删除，shared_ptr计数--）
+    disconnected_ = true;
 }
 
 void TcpConnection::HandleRead()
 {
+    if(disconnected_)
+    {
+        return ;
+    }
     ssize_t nread = Utilities::Readn(channel_->Fd(), buffer_in_);
     if(nread > 0)
     {
@@ -113,6 +129,10 @@ void TcpConnection::HandleRead()
 
 void TcpConnection::HandleWrite() // 触发EPOLLOUT
 {
+    if(disconnected_)
+    {
+        return ;
+    }
     ssize_t nwrite = Utilities::Writen(channel_->Fd(), buffer_out_);
     if(nwrite > 0)
     {
@@ -123,7 +143,7 @@ void TcpConnection::HandleWrite() // 触发EPOLLOUT
             loop_->CommitTaskToLoop(std::bind(&EventLoop::UpdateChannelInEpoller, loop_, channel_.get()));
             write_complete_callback_(shared_from_this());
 
-            // TODO:半关闭
+            // TODO:半关闭，如果对端关闭后服务端继续写会发送SIGPIPE，导致服务端退出？
 
         }
         else // 系统缓冲区满了，并且数据没发完，设置EPOLLOUT事件触发
@@ -148,15 +168,22 @@ void TcpConnection::HandleWrite() // 触发EPOLLOUT
 
 void TcpConnection::HandleClose()
 {
-
-    loop_->CommitTaskToLoop(std::bind(&EventLoop::RemoveChannelFromEpoller, loop_, channel_.get()));
+    if(disconnected_)
+    {
+        return ;
+    }
+    // loop_->CommitTaskToLoop(std::bind(&EventLoop::RemoveChannelFromEpoller, loop_, channel_.get())); // 析构函数会调用
     loop_->CommitTaskToLoop(std::bind(connection_cleanup_, shared_from_this()));
+    disconnected_ = true;
 }
 
 void TcpConnection::HandleError()
 {
-
-    // loop_->RemoveChannelFromEpoller(channel_.get()); // 移除loop_线程中epoller的该连接channel事件
-    loop_->CommitTaskToLoop(std::bind(&EventLoop::RemoveChannelFromEpoller, loop_, channel_.get()));
+    if(disconnected_)
+    {
+        return ;
+    }
+    // loop_->CommitTaskToLoop(std::bind(&EventLoop::RemoveChannelFromEpoller, loop_, channel_.get())); // 析构函数会调用
     loop_->CommitTaskToLoop(std::bind(connection_cleanup_, shared_from_this()));
+    disconnected_ = true;
 }

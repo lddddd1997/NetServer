@@ -40,6 +40,7 @@ public:
     void Shutdown();
 
 private:
+    bool disconnected_;
     // int fd_;
     EventLoop *loop_;
     ChannelUPtr channel_;
