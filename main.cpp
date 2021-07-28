@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <EventLoopThreadPool.h>
+#include <TcpConnection.h>
 using namespace std;
 
 using ChannelPtrList = std::vector<Channel*>;
@@ -57,13 +58,14 @@ int main()
     Epoller Epoller;
     chan.SetFd(Socket.Fd());
     chan.SetEvents(EPOLLIN | EPOLLET);
-    chan.SetReadHandle([&Socket, &Epoller, &channel_map](){
+    int save_fd;
+    chan.SetReadHandle([&Socket, &Epoller, &channel_map, &save_fd](){
         struct sockaddr_in client_addr;
         int cfd = Socket.Accept(client_addr);
+        save_fd = cfd;
         cout << "--------------Client connection " << inet_ntoa(client_addr.sin_addr) << 
         ":" << ntohs(client_addr.sin_port) << " cfd = " << cfd <<  endl;
         channel_map[cfd] = new Channel;
-
         channel_map[cfd]->SetFd(cfd);
         channel_map[cfd]->SetEvents(EPOLLRDHUP | EPOLLIN | EPOLLET);
 
@@ -71,13 +73,15 @@ int main()
                 cout << "cfd = " << cfd << endl;
                 char buf[1024];
                 int n = read(cfd, buf, 1024);
+                if(n == 0)
+                    cout << "read close" << endl;
                 write(STDOUT_FILENO, buf, n);
             });
 
         channel_map[cfd]->SetCloseHandle([cfd, &channel_map, &Epoller](){
                 Epoller.RemoveChannelFromEpoller(channel_map[cfd]);
                 channel_map.erase(cfd);
-                close(cfd);
+                // close(cfd);
                 cout << "close handle: " << cfd << endl;
                 delete channel_map[cfd];
             });
@@ -99,11 +103,12 @@ int main()
     
     ChannelPtrList chlist;
     sleep(1);
+    signal(SIGPIPE, SIG_IGN);
     while(qq == 0)
     {
         //cout << "start EpollWait" << endl;
         chlist.clear();
-        Epoller.EpollWait(5000, chlist);
+        Epoller.EpollWait(1000, chlist);
         //cout << "EpollWait " << chlist.size() << endl;
         if(!chlist.empty())
         {
@@ -112,6 +117,10 @@ int main()
                 ch->HandleEvents(); // 处理事件
             }
         }
+        char buf[1024] = "test\n";
+        int n = write(save_fd, buf, 5);
+        cout << n << endl;
+        perror("write");
         // sleep(1);
     }
 
