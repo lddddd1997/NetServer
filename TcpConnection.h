@@ -35,11 +35,9 @@ public:
         return loop_;
     }
 
-    void CommitChannelToLoop();
+    void ConnectEstablished();
     void Send(const std::string& str);
-    void SendInLoop();
     void Shutdown();
-
 
 private:
     // int fd_;
@@ -53,8 +51,13 @@ private:
     std::string buffer_out_; 
     
     MessageCallback message_callback_;
+    Callback write_complete_callback_;
+    Callback close_callback_;
+    Callback error_callback_;
+    Callback connection_cleanup_;
 
-
+    void SendInLoop();
+    void ShutdownInLoop();
     void HandleRead();
     void HandleWrite();
     void HandleClose();
