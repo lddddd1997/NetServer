@@ -1,6 +1,6 @@
 /**
 * @file     TcpConnection.cpp
-* @brief    tcp connection
+* @brief    tcp客户端连接
 * @author   lddddd (https://github.com/lddddd1997)
 */
 #include <TcpConnection.h>
@@ -19,10 +19,10 @@ TcpConnection::TcpConnection(EventLoop *loop, int fd,
 {
     channel_->SetFd(fd);
     channel_->SetEvents(EPOLLRDHUP | EPOLLIN | EPOLLET);
-    channel_->SetReadHandle(std::bind(&TcpConnection::HandleRead, this));
-    channel_->SetWriteHandle(std::bind(&TcpConnection::HandleWrite, this));
-    channel_->SetCloseHandle(std::bind(&TcpConnection::HandleClose, this));
-    channel_->SetErrorHandle(std::bind(&TcpConnection::HandleError, this));
+    channel_->SetReadHandler(std::bind(&TcpConnection::ReadHandler, this));
+    channel_->SetWriteHandler(std::bind(&TcpConnection::WriteHandler, this));
+    channel_->SetCloseHandler(std::bind(&TcpConnection::CloseHandler, this));
+    channel_->SetErrorHandler(std::bind(&TcpConnection::ErrorHandler, this));
 }
 
 TcpConnection::~TcpConnection() // TcpConnection的shared_ptr对象引用计数为0
@@ -33,7 +33,7 @@ TcpConnection::~TcpConnection() // TcpConnection的shared_ptr对象引用计数�
     assert(disconnected_); // 确认是否已经关闭
 }
 
-void TcpConnection::ConnectEstablished()
+void TcpConnection::ConnectEstablished() // base_loop线程接收新连接后，初始化
 {
     // https://blog.csdn.net/u011344601/article/details/51997886?utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromMachineLearnPai2%7Edefault-4.control&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromMachineLearnPai2%7Edefault-4.control
     // loop_->CommitChannelToEpoller(channel_.get()); // base_loop线程执行，可能导致loop_的epoller的线程安全问题（loop_线程epoll_wait时，base_loop线程调用loop_的epoll_ctl）
@@ -44,7 +44,7 @@ void TcpConnection::ConnectEstablished()
 void TcpConnection::Send(const std::string& str)
 {
     buffer_out_ += str;
-    loop_->CommitTaskToLoop(std::bind(&TcpConnection::SendInLoop, shared_from_this()));
+    loop_->CommitTaskToLoop(std::bind(&TcpConnection::SendInLoop, shared_from_this())); // 交给loop_线程运行
 }
 
 void TcpConnection::SendInLoop()
@@ -59,7 +59,7 @@ void TcpConnection::SendInLoop()
         uint32_t events = channel_->Events();
         if(buffer_out_.size() == 0) // 数据发完了
         {
-            // channel_->SetEvents(events & (~EPOLLOUT)); // 取消EPOLLOUT事件触发
+            // channel_->SetEvents(events & (~EPOLLOUT)); // 取消EPOLLOUT事件触发（在触发EPOLLOUT执行WriteHandler并且写完后再取消）
             // loop_->CommitTaskToLoop(std::bind(&EventLoop::UpdateChannelInEpoller, loop_, channel_.get()));
             write_complete_callback_(shared_from_this());
 
@@ -78,15 +78,15 @@ void TcpConnection::SendInLoop()
     }
     else if(nwrite == 0)
     {
-        HandleClose();
+        CloseHandler();
     }
     else
     {
-        HandleError();
+        ErrorHandler();
     }
 }
 
-void TcpConnection::Shutdown()
+void TcpConnection::Shutdown() // 主动关闭连接
 {
     loop_->CommitTaskToLoop(std::bind(&TcpConnection::ShutdownInLoop, shared_from_this()));
 }
@@ -104,7 +104,7 @@ void TcpConnection::ShutdownInLoop()
     disconnected_ = true;
 }
 
-void TcpConnection::HandleRead()
+void TcpConnection::ReadHandler()
 {
     if(disconnected_)
     {
@@ -119,15 +119,15 @@ void TcpConnection::HandleRead()
     else if(nread == 0) // 客户端关闭socket，FIN，设置了EPOLLRDHUP事件，不会发生该情况
     {
         std::cout << "nread = 0" << std::endl;
-        HandleClose();
+        CloseHandler();
     }
     else
     {
-        HandleError();
+        ErrorHandler();
     }
 }
 
-void TcpConnection::HandleWrite() // 触发EPOLLOUT
+void TcpConnection::WriteHandler() // 触发EPOLLOUT
 {
     if(disconnected_)
     {
@@ -158,15 +158,15 @@ void TcpConnection::HandleWrite() // 触发EPOLLOUT
     }
     else if(nwrite == 0)
     {
-        HandleClose();
+        CloseHandler();
     }
     else
     {
-        HandleError();
+        ErrorHandler();
     }
 }
 
-void TcpConnection::HandleClose()
+void TcpConnection::CloseHandler()
 {
     if(disconnected_)
     {
@@ -177,7 +177,7 @@ void TcpConnection::HandleClose()
     disconnected_ = true;
 }
 
-void TcpConnection::HandleError()
+void TcpConnection::ErrorHandler()
 {
     if(disconnected_)
     {

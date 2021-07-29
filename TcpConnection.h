@@ -1,6 +1,6 @@
 /**
 * @file     TcpConnection.h
-* @brief    tcp connection
+* @brief    tcp客户端连接，上层使用shared_ptr进行声明周期管理
 * @author   lddddd (https://github.com/lddddd1997)
 */
 #ifndef TCP_CONNECTION_H_
@@ -35,6 +35,27 @@ public:
         return loop_;
     }
 
+    void SetMessaeCallback(const MessageCallback &cb)
+    {
+        message_callback_ = cb;
+    }
+    void SetWriteCompleteCallback(const Callback &cb)
+    {
+        write_complete_callback_ = cb;
+    }
+    void SetCloseCallback(const Callback &cb)
+    {
+        close_callback_ = cb;
+    }
+    void SetErrorCallback(const Callback &cb)
+    {
+        error_callback_ = cb;
+    }
+    void SetConnectionCleanup(const Callback &cb)
+    {
+        connection_cleanup_ = cb;
+    }
+
     void ConnectEstablished();
     void Send(const std::string& str);
     void Shutdown();
@@ -59,10 +80,10 @@ private:
 
     void SendInLoop();
     void ShutdownInLoop();
-    void HandleRead();
-    void HandleWrite();
-    void HandleClose();
-    void HandleError();
+    void ReadHandler();
+    void WriteHandler();
+    void CloseHandler();
+    void ErrorHandler();
 };
 
 #endif
