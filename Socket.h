@@ -27,6 +27,7 @@ public:
     void SetKeepAlive(bool on); // 设置TCP层的心跳检测，默认发送心跳检测数据包间隔为7200s
     void SetTcpNoDelay(bool on); // 设置是否开启nagle算法，关闭后提高传输效率
     void BindAddress(int port); // 绑定socket地址
+    void BindAddress(const struct sockaddr_in& addr); // 绑定socket地址
     void SetListen(); // 设置最大同时等待连接数
     int Accept(struct sockaddr_in &client_addr); // accept封装
 private:

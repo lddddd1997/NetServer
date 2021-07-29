@@ -81,6 +81,16 @@ void Socket::BindAddress(int port)
     }
 }
 
+void Socket::BindAddress(const struct sockaddr_in& addr)
+{
+    if(bind(sockfd_, reinterpret_cast<const struct sockaddr*>(&addr), sizeof(addr)) == -1)
+    {
+        close(sockfd_);
+        perror("Socket::BindAddress");
+        exit(EXIT_FAILURE);
+    }
+}
+
 void Socket::SetListen()
 {
     if(listen(sockfd_, SOMAXCONN) == -1) // 设置最大同时等待连接数，而非同时保持连接数量
