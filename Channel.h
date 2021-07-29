@@ -11,7 +11,7 @@
 class Channel
 {
 public:
-    using EventCallback = std::function<void()>;
+    using EventHandler = std::function<void()>;
 
     Channel();
     ~Channel();
@@ -45,37 +45,37 @@ public:
         return revents_;
     }
 
-    void SetReadHandle(const EventCallback& cb) // 设置读事件回调
+    void SetReadHandler(const EventHandler& cb) // 设置读事件回调
     {
-        read_callback_ = cb;
+        read_handler_ = cb;
     }
 
-    void SetWriteHandle(const EventCallback& cb) // 设置写事件回调
+    void SetWriteHandler(const EventHandler& cb) // 设置写事件回调
     {
-        write_callback_ = cb;
+        write_handler_ = cb;
     }
 
-    void SetCloseHandle(const EventCallback& cb) // 设置关闭事件回调
+    void SetCloseHandler(const EventHandler& cb) // 设置关闭事件回调
     {
-        close_callback_ = cb;
+        close_handler_ = cb;
     }
 
-    void SetErrorHandle(const EventCallback& cb) // 设置错误事件回调
+    void SetErrorHandler(const EventHandler& cb) // 设置错误事件回调
     {
-        error_callback_ = cb;
+        error_handler_ = cb;
     }
 
-    void HandleEvents(); // 事件的处理
+    void EventsHandling(); // 事件的处理
 
 private:
     int fd_;
     uint32_t events_;
     uint32_t revents_;
 
-    EventCallback read_callback_;
-    EventCallback write_callback_;
-    EventCallback close_callback_;
-    EventCallback error_callback_;
+    EventHandler read_handler_;
+    EventHandler write_handler_;
+    EventHandler close_handler_;
+    EventHandler error_handler_;
 };
 
 #endif
