@@ -8,7 +8,7 @@
 
 #include <Channel.h>
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <sys/epoll.h>
 
 class Epoller
@@ -16,7 +16,7 @@ class Epoller
 public:
     using ChannelPtrList = std::vector<Channel*>;
     using EventList = std::vector<struct epoll_event>;
-    using ChannelMap = std::map<int, Channel*>;
+    using ChannelHashMap = std::unordered_map<int, Channel*>; // 使用unordered_map，效率比map高
 
     Epoller();
     ~Epoller();
@@ -29,7 +29,7 @@ public:
 private:
     int epollfd_; // epoll文件描述符
     EventList event_list_; // events数组，epoll_wait的传出参数
-    ChannelMap channel_map_; // 事件集合
+    ChannelHashMap channel_map_; // 事件集合
     static const int EVENTLISTSIZE = 16; // 初始events数组大小
     void FilleActiveChannels(int nfds, ChannelPtrList &active_channel_list); // 填充活跃事件
 };

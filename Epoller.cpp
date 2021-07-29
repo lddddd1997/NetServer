@@ -94,7 +94,7 @@ void Epoller::FilleActiveChannels(int nfds, ChannelPtrList &active_channel_list)
     for(int i = 0; i < nfds; i++)
     {
         Channel *channel = static_cast<Channel*>(event_list_[i].data.ptr);
-        std::map<int, Channel*>::const_iterator it = channel_map_.find(channel->Fd());
+        ChannelHashMap::const_iterator it = channel_map_.find(channel->Fd());
         if(it != channel_map_.end())
         {
             channel->SetRevents(event_list_[i].events); // 设置epoll的触发事件
