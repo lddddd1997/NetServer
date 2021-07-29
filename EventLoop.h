@@ -71,7 +71,7 @@ private:
     std::mutex mutex_;  // 用于保护任务列表
 
     void Wakeup(); // 事件通知，唤醒loop
-    void WakeupHandleRead(); // 唤醒后的读回调
+    void WakeupReadHandler(); // 唤醒后的读回调
     void ExecutePendingTasks(); // 执行任务
 };
 

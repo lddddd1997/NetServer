@@ -21,7 +21,7 @@ EventLoop::EventLoop() :
     }
     wakeup_channel_.SetFd(wakeupfd_);
     wakeup_channel_.SetEvents(EPOLLIN | EPOLLET);
-    wakeup_channel_.SetReadHandle(std::bind(&EventLoop::WakeupHandleRead, this));
+    wakeup_channel_.SetReadHandler(std::bind(&EventLoop::WakeupReadHandler, this));
     CommitChannelToEpoller(&wakeup_channel_); // 将事件通知加入epoller中
 }
 
@@ -43,7 +43,7 @@ void EventLoop::Looping()
         for(Channel *channel : active_channel_list_)
         {
             current_active_channel_ = channel;
-            current_active_channel_->HandleEvents(); // 执行活跃事件的回调
+            current_active_channel_->EventsHandling(); // 执行活跃事件的回调
         }
         current_active_channel_ = nullptr;
         ExecutePendingTasks(); // 执行任务
@@ -77,7 +77,7 @@ void EventLoop::Wakeup()
     }
 }
 
-void EventLoop::WakeupHandleRead()
+void EventLoop::WakeupReadHandler()
 {
     uint64_t one = 1;
     ssize_t n = read(wakeupfd_, &one, sizeof(one));
