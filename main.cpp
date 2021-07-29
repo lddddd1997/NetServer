@@ -25,14 +25,14 @@ public:
 
     }
     
-    void ReadHandle()
+    void ReadHandler()
     {
         cout << "cfd = " << fd_ << endl;
         char buf[1024];
         int n = read(fd_, buf, 1024);
         write(STDOUT_FILENO, buf, n);
     }
-    void CloseHandle()
+    void CloseHandler()
     {
         close(fd_);
     }
@@ -48,7 +48,7 @@ int main()
     Socket.BindAddress(8888);
     Socket.SetListen();
     
-    map<int, Channel*> channel_map;
+    unordered_map<int, Channel*> channel_map;
     ThreadPool Pool(4);
     // EventLoop base_loop;
     EventLoopThreadPool ELPool(nullptr, 4);
@@ -59,7 +59,7 @@ int main()
     chan.SetFd(Socket.Fd());
     chan.SetEvents(EPOLLIN | EPOLLET);
     int save_fd;
-    chan.SetReadHandle([&Socket, &Epoller, &channel_map, &save_fd](){
+    chan.SetReadHandler([&Socket, &Epoller, &channel_map, &save_fd](){
         struct sockaddr_in client_addr;
         int cfd = Socket.Accept(client_addr);
         save_fd = cfd;
@@ -69,7 +69,7 @@ int main()
         channel_map[cfd]->SetFd(cfd);
         channel_map[cfd]->SetEvents(EPOLLRDHUP | EPOLLIN | EPOLLET);
 
-        channel_map[cfd]->SetReadHandle([cfd, &channel_map](){
+        channel_map[cfd]->SetReadHandler([cfd, &channel_map](){
                 cout << "cfd = " << cfd << endl;
                 char buf[1024];
                 int n = read(cfd, buf, 1024);
@@ -78,7 +78,7 @@ int main()
                 write(STDOUT_FILENO, buf, n);
             });
 
-        channel_map[cfd]->SetCloseHandle([cfd, &channel_map, &Epoller](){
+        channel_map[cfd]->SetCloseHandler([cfd, &channel_map, &Epoller](){
                 Epoller.RemoveChannelFromEpoller(channel_map[cfd]);
                 channel_map.erase(cfd);
                 // close(cfd);
@@ -114,7 +114,7 @@ int main()
         {
             for(auto ch : chlist)
             {
-                ch->HandleEvents(); // 处理事件
+                ch->EventsHandling(); // 处理事件
             }
         }
         char buf[1024] = "test\n";
