@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <cstring>
 #include <iostream>
+#include <Utilities.h>
 
 Socket::Socket()
 {
@@ -65,6 +66,10 @@ void Socket::SetTcpNoDelay(bool on) // 关闭Nagle算法
         exit(EXIT_FAILURE);
     }
 }
+void Socket::SetNonblock()
+{
+    Utilities::SetNonBlock(sockfd_); // 设置非阻塞IO
+}
 
 void Socket::BindAddress(int port)
 {
@@ -103,11 +108,10 @@ void Socket::SetListen()
 int Socket::Accept(struct sockaddr_in &client_addr)
 {
     socklen_t addr_len = sizeof(client_addr);
-    int connfd = accept4(sockfd_, reinterpret_cast<struct sockaddr*>(&client_addr),
-                         &addr_len, SOCK_NONBLOCK | SOCK_CLOEXEC); // accept4相较于accpet多了设置flags参数
+    int connfd = accept(sockfd_, reinterpret_cast<struct sockaddr*>(&client_addr), &addr_len);
     if(connfd == -1)
     {
-        perror("Socket::Accept");
+        // perror("Socket::Accept");
         switch(errno)
         {
             case EAGAIN:
