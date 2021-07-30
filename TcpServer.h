@@ -58,7 +58,7 @@ private:
     struct sockaddr_in server_addr_;
     ConnectionHashMap connections_map_;
     EventLoopThreadPool event_loop_thread_pool_;
-    std::mutex mutex_;
+    // std::mutex mutex_; // 解决connections_map_的线程安全
 
     MessageCallback message_callback_;
     Callback write_complete_callback_;
@@ -70,7 +70,8 @@ private:
 
     void NewConnectionHandler();
     void ConnectionErrorHandler();
-    void RemoveConnection(const TcpConnectionSPtr& connection);
+    void RemoveConnectionFromMap(const TcpConnectionSPtr& connection);
+    void RemoveConnectionInLoop(const TcpConnectionSPtr& connection);
 };
 
 #endif
