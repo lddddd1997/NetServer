@@ -7,13 +7,14 @@
 #define CHANNEL_H_
 
 #include <functional>
+#include <string>
 
 class Channel
 {
 public:
     using EventHandler = std::function<void()>;
 
-    Channel();
+    Channel(const std::string& name);
     ~Channel();
 
     void SetFd(int fd) // 设置文件描述符
@@ -71,6 +72,7 @@ private:
     int fd_;
     uint32_t events_;
     uint32_t revents_;
+    std::string name_;
 
     EventHandler read_handler_;
     EventHandler write_handler_;
