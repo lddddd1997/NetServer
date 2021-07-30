@@ -13,13 +13,13 @@ TcpConnection::TcpConnection(EventLoop *loop, int fd,
                   const struct sockaddr_in& local_addr, const struct sockaddr_in& peer_addr) :
     disconnected_(true),
     loop_(loop),
-    channel_(new Channel()),
+    channel_(new Channel("client")),
     local_addr_(local_addr),
     peer_addr_(peer_addr)
 {
     channel_->SetFd(fd);
     channel_->SetEvents(EPOLLRDHUP | EPOLLIN | EPOLLET);
-    channel_->SetReadHandler(std::bind(&TcpConnection::ReadHandler, this));
+    channel_->SetReadHandler(std::bind(&TcpConnection::ReadHandler, this)); // TODO:传this，存在线程安全
     channel_->SetWriteHandler(std::bind(&TcpConnection::WriteHandler, this));
     channel_->SetCloseHandler(std::bind(&TcpConnection::CloseHandler, this));
     channel_->SetErrorHandler(std::bind(&TcpConnection::ErrorHandler, this));
@@ -27,8 +27,8 @@ TcpConnection::TcpConnection(EventLoop *loop, int fd,
 
 TcpConnection::~TcpConnection() // TcpConnection的shared_ptr对象引用计数为0
 {
-    // loop_->RemoveChannelFromEpoller(channel_.get()); // 从该loop的epoller中删除channel事件，此时必定处于该loop_线程
-    loop_->CommitTaskToLoop(std::bind(&EventLoop::RemoveChannelFromEpoller, loop_, channel_.get())); // CommitTaskToLoop内部判断，如果处于当前loop_线程，则直接执行任务，否则投递到loop_线程的任务队列等待执行
+    std::cout << "TcpConnection::~TcpConnection" << std::endl;
+    // loop_->CommitTaskToLoop(std::bind(&EventLoop::RemoveChannelFromEpoller, loop_, channel_.get())); // 无需清除，close后epoll会自动删除，，man文档Q6
     close(channel_->Fd());
     assert(disconnected_); // 确认是否已经关闭
 }
@@ -44,7 +44,7 @@ void TcpConnection::ConnectEstablished() // base_loop线程接收新连接后，
 void TcpConnection::Send(const std::string& str)
 {
     buffer_out_ += str;
-    loop_->CommitTaskToLoop(std::bind(&TcpConnection::SendInLoop, shared_from_this())); // 交给loop_线程运行
+    loop_->CommitTaskToLoop(std::bind(&TcpConnection::SendInLoop, shared_from_this())); // 投递到loop_线程，解决线程安全问题
 }
 
 void TcpConnection::SendInLoop()
@@ -54,6 +54,7 @@ void TcpConnection::SendInLoop()
         return ;
     }
     int nwrite = Utilities::Writen(channel_->Fd(), buffer_out_);
+    std::cout << "nwrite = " << nwrite << std::endl;
     if(nwrite > 0)
     {
         uint32_t events = channel_->Events();
@@ -88,7 +89,7 @@ void TcpConnection::SendInLoop()
 
 void TcpConnection::Shutdown() // 主动关闭连接
 {
-    loop_->CommitTaskToLoop(std::bind(&TcpConnection::ShutdownInLoop, shared_from_this()));
+    loop_->CommitTaskToLoop(std::bind(&TcpConnection::ShutdownInLoop, shared_from_this())); // 投递到loop_线程，解决线程安全问题
 }
 
 void TcpConnection::ShutdownInLoop()
@@ -99,18 +100,20 @@ void TcpConnection::ShutdownInLoop()
     }
     std::cout << "shutdown" << std::endl;
     close_callback_(shared_from_this());
-    // loop_->CommitTaskToLoop(std::bind(&EventLoop::RemoveChannelFromEpoller, loop_, channel_.get()));
+    // loop_->CommitTaskToLoop(std::bind(&EventLoop::RemoveChannelFromEpoller, loop_, channel_.get())); // 从该loop的epoller中删除channel事件
     loop_->CommitTaskToLoop(std::bind(connection_cleanup_, shared_from_this())); // 上层Server层清理（从tcp连接表中删除，shared_ptr计数--）
     disconnected_ = true;
 }
 
 void TcpConnection::ReadHandler()
 {
+    // std::cout << "shared_from_this().use_count " << shared_from_this().use_count() << std::endl;
     if(disconnected_)
     {
         return ;
     }
     ssize_t nread = Utilities::Readn(channel_->Fd(), buffer_in_);
+    // std::cout << "nread = " << nread << std::endl;
     if(nread > 0)
     {
         message_callback_(shared_from_this(), buffer_in_);
@@ -134,6 +137,7 @@ void TcpConnection::WriteHandler() // 触发EPOLLOUT
         return ;
     }
     ssize_t nwrite = Utilities::Writen(channel_->Fd(), buffer_out_);
+    // std::cout << "nwrite = " << nwrite << std::endl;
     if(nwrite > 0)
     {
         uint32_t events = channel_->Events();
@@ -172,8 +176,10 @@ void TcpConnection::CloseHandler()
     {
         return ;
     }
-    // loop_->CommitTaskToLoop(std::bind(&EventLoop::RemoveChannelFromEpoller, loop_, channel_.get())); // 析构函数会调用
-    loop_->CommitTaskToLoop(std::bind(connection_cleanup_, shared_from_this()));
+    // loop_->CommitTaskToLoop(std::bind(&EventLoop::RemoveChannelFromEpoller, loop_, channel_.get())); // 从该loop的epoller中删除channel事件
+    std::cout << shared_from_this().use_count() << std::endl;
+    loop_->CommitTaskToLoop(std::bind(connection_cleanup_, shared_from_this())); // 交给TcpServer，从connections_map_中删除
+    close_callback_(shared_from_this()); // 单IO线程池数量为0，为何后面的不运行了？？？
     disconnected_ = true;
 }
 
@@ -183,7 +189,8 @@ void TcpConnection::ErrorHandler()
     {
         return ;
     }
-    // loop_->CommitTaskToLoop(std::bind(&EventLoop::RemoveChannelFromEpoller, loop_, channel_.get())); // 析构函数会调用
-    loop_->CommitTaskToLoop(std::bind(connection_cleanup_, shared_from_this()));
+    // loop_->CommitTaskToLoop(std::bind(&EventLoop::RemoveChannelFromEpoller, loop_, channel_.get())); // 从该loop的epoller中删除channel事件
+    loop_->CommitTaskToLoop(std::bind(connection_cleanup_, shared_from_this())); // 交给TcpServer，从connections_map_中删除
+    error_callback_(shared_from_this());
     disconnected_ = true;
 }
