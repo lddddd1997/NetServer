@@ -61,7 +61,7 @@ private:
     std::atomic<bool> looping_; // loop运行状态
     std::atomic<bool> quit_; // 事件循环退出状态
     int wakeupfd_; // 事件通知文件描述符
-    static const int EPOLLTIMEOUT = 1000; // epoll_wait的超时时间
+    static const int EPOLLTIMEOUT = 5000; // epoll_wait的超时时间
     std::thread::id thread_id_; // loop所在的线程ID
     Epoller epoller_;
     ChannelPtrList active_channel_list_; // 活跃事件列表

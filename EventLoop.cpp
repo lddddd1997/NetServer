@@ -11,9 +11,11 @@
 EventLoop::EventLoop() :
     looping_(false),
     quit_(true),
-    thread_id_(std::this_thread::get_id())
+    thread_id_(std::this_thread::get_id()),
+    wakeup_channel_("wakeup")
 {
     wakeupfd_ = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+    // std::cout << "EventLoop " << wakeupfd_ << std::endl;
     if(wakeupfd_ == -1)
     {
         perror("EventLoop::EventLoop");
@@ -27,6 +29,7 @@ EventLoop::EventLoop() :
 
 EventLoop::~EventLoop()
 {
+    std::cout << "EventLoop::~EventLoop" << std::endl;
     close(wakeupfd_);
 }
 
@@ -53,7 +56,7 @@ void EventLoop::Looping()
 
 void EventLoop::CommitTaskToLoop(const Task& task)
 {
-    // std::cout << "commit id: " << std::this_thread::get_id() << " loop id: " << ThreadId() << std::endl;
+    std::cout << "commit id: " << std::this_thread::get_id() << " loop id: " << ThreadId() << std::endl;
     if(IsInLoopThread()) // 如果在当前线程，则直接执行任务，减少IO次数
     {
         task();
@@ -63,7 +66,7 @@ void EventLoop::CommitTaskToLoop(const Task& task)
         std::lock_guard <std::mutex> lock(mutex_);                    
         task_list_.push_back(task); 
     }
-    //std::cout << "WakeUp" << std::endl;
+    // std::cout << "WakeUp  " << wakeupfd_ << std::endl;
     Wakeup(); // 跨线程唤醒，worker线程唤醒IO线程
 }
 
