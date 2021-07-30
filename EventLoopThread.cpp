@@ -27,7 +27,7 @@ EventLoopThread::~EventLoopThread()
 EventLoop* EventLoopThread::StartLoop()
 {
     thread_ = std::thread(&EventLoopThread::RunInThread, this); // thread& operator=(thread&& __t) noexcept
-    EventLoop* loop;
+    EventLoop *loop;
     {
         std::unique_lock<std::mutex> lock(mutex_);
         while(loop_ == nullptr)
