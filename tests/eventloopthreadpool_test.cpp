@@ -13,25 +13,25 @@ void print(EventLoop *p = nullptr)
 
 int main()
 {
-    EventLoop base_loop;
+    EventLoop basic_loop;
     {
-        EventLoopThreadPool Pool(&base_loop, 0);
+        EventLoopThreadPool Pool(&basic_loop, 0);
         Pool.Start();
         EventLoop *loop = Pool.GetNextLoop();
         loop->CommitTaskToLoop(bind(print, loop));
-        assert(loop == &base_loop);
-        assert(Pool.GetNextLoop() == &base_loop);
-        assert(Pool.GetNextLoop() == &base_loop);
-        assert(Pool.GetNextLoop() == &base_loop);
+        assert(loop == &basic_loop);
+        assert(Pool.GetNextLoop() == &basic_loop);
+        assert(Pool.GetNextLoop() == &basic_loop);
+        assert(Pool.GetNextLoop() == &basic_loop);
     }
 
     {
-        EventLoop base_loop;
-        EventLoopThreadPool Pool(&base_loop, 3);
+        EventLoop basic_loop;
+        EventLoopThreadPool Pool(&basic_loop, 3);
         Pool.Start();
         EventLoop *loop = Pool.GetNextLoop();
         loop->CommitTaskToLoop(bind(print, loop));
-        assert(loop != &base_loop);
+        assert(loop != &basic_loop);
         assert(Pool.GetNextLoop() != loop);
         EventLoop *loop1 = Pool.GetNextLoop();
         loop1->CommitTaskToLoop(bind(print, loop1));
@@ -39,7 +39,7 @@ int main()
         assert(Pool.GetNextLoop() == loop);
     }
     cout << "-------------------------------" << endl << endl;
-    EventLoopThreadPool Pool(&base_loop, 2);
+    EventLoopThreadPool Pool(&basic_loop, 2);
     Pool.Start();
     for(int i = 0; i < 5; i++)
     {

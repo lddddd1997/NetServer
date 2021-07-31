@@ -58,8 +58,12 @@ int main(int argc, char **argv)
 	}
 	cout << "--------------Connect to server " << srv_ip << ":" << srv_port << " fd = " << sock_fd << endl;
 
-	char buf[1024] = "asdasd";
-	write(sock_fd, buf, 10);
+	const int N = 1000000;
+	char buf[N];
+	for(int i = 0; i < N - 1; i++)
+		buf[i] = 'a';
+	buf[N] = '\0';
+	write(sock_fd, buf, N);
 	sleep(1);
 	/*while(true)
 	{
