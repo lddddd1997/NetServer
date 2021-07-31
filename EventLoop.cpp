@@ -8,9 +8,10 @@
 #include <sys/eventfd.h>
 #include <iostream>
 
-EventLoop::EventLoop() :
+EventLoop::EventLoop(const std::string& name) :
     looping_(false),
     quit_(true),
+    thread_name_(name),
     thread_id_(std::this_thread::get_id()),
     wakeup_channel_("wakeup")
 {
@@ -37,8 +38,7 @@ void EventLoop::Looping()
 {
     looping_ = true;
     quit_ = false;
-    // std::cout << ThreadId() <<  " " << "start looping..." << std::endl;
-
+    std::cout << "The " << thread_name_ << " thread is running, thread id = " << thread_id_ << std::endl;
     while(!quit_)
     {
         active_channel_list_.clear();
@@ -56,7 +56,7 @@ void EventLoop::Looping()
 
 void EventLoop::CommitTaskToLoop(const Task& task)
 {
-    std::cout << "commit id: " << std::this_thread::get_id() << " loop id: " << ThreadId() << std::endl;
+    // std::cout << "commit id: " << std::this_thread::get_id() << " loop id: " << ThreadId() << std::endl;
     if(IsInLoopThread()) // 如果在当前线程，则直接执行任务，减少IO次数
     {
         task();

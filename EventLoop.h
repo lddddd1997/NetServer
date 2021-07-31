@@ -8,6 +8,7 @@
 
 #include <thread>
 #include <vector>
+#include <string>
 #include <functional>
 #include <atomic>
 #include <mutex>
@@ -20,7 +21,7 @@ public:
     using TaskList = std::vector<Task>;
     using ChannelPtrList = std::vector<Channel*>;
 
-    EventLoop();
+    EventLoop(const std::string& name);
     ~EventLoop();
 
     void Looping(); // 执行事件循环
@@ -62,6 +63,7 @@ private:
     std::atomic<bool> quit_; // 事件循环退出状态
     int wakeupfd_; // 事件通知文件描述符
     static const int EPOLLTIMEOUT = 5000; // epoll_wait的超时时间
+    std::string thread_name_; // 线程名
     std::thread::id thread_id_; // loop所在的线程ID
     Epoller epoller_;
     ChannelPtrList active_channel_list_; // 活跃事件列表
