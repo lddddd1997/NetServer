@@ -22,7 +22,7 @@ public:
     using Callback = std::function<void(const TcpConnectionSPtr&)>;
     using MessageCallback = std::function<void(const TcpConnectionSPtr&, std::string&)>;
 
-    TcpServer(EventLoop *base_loop, int port, int threadnum);
+    TcpServer(EventLoop *basic_loop, int port, int threa_dnum);
     ~TcpServer();
 
     void Start();
@@ -35,6 +35,7 @@ public:
     { 
         write_complete_callback_ = cb; 
     }
+
     void SetConnectionCallback(const Callback& cb)
     {
         connection_callback_ = cb;
@@ -50,9 +51,13 @@ public:
         error_callback_ = cb;
     }
 
+    int ConnectionsCount() const // 可能存在线程安全？？？
+    {
+        return connections_map_.size();
+    }
 private:
     // int connection_count_;
-    EventLoop *base_loop_;
+    EventLoop *basic_loop_;
     Socket server_socket_;
     Channel server_channel_;
     struct sockaddr_in server_addr_;
