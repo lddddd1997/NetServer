@@ -34,8 +34,15 @@ public:
     {
         return loop_;
     }
-
-    void SetMessaeCallback(const MessageCallback &cb)
+    struct sockaddr_in LocalAddress() const
+    {
+        return local_addr_;
+    }
+    struct sockaddr_in PeerAddress() const
+    {
+        return peer_addr_;
+    }
+    void SetMessageCallback(const MessageCallback &cb)
     {
         message_callback_ = cb;
     }
