@@ -42,8 +42,8 @@ EventLoop* EventLoopThread::StartLoop()
 void EventLoopThread::RunInThread()
 {
     thread_id_ = std::this_thread::get_id();
-    std::cout << "The IO thread is running, thread id = " << thread_id_ << std::endl;
-    EventLoop loop;
+    // std::cout << "The IO thread is running, thread id = " << thread_id_ << std::endl;
+    EventLoop loop("IO");
     {
         std::lock_guard<std::mutex> lock(mutex_);
         loop_ = &loop;
