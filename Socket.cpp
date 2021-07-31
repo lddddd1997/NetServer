@@ -18,7 +18,7 @@ Socket::Socket()
         perror("Socket::Socket");
         exit(EXIT_FAILURE);
     }
-    std::cout << "socket create..." << std::endl;
+    // std::cout << "socket create..." << std::endl;
 }
 
 Socket::~Socket()
