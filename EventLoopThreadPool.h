@@ -17,7 +17,7 @@ public:
     using ThreadUPtrList = std::vector<std::unique_ptr<EventLoopThread>>;
     using EventLoopList = std::vector<EventLoop*>;
 
-    EventLoopThreadPool(EventLoop *base_loop, int thread_num);
+    EventLoopThreadPool(EventLoop *basic_loop, int thread_num);
     ~EventLoopThreadPool();
 
     void Start(); // 启动线程池
@@ -25,7 +25,7 @@ public:
 private:
     int thread_num_; // 线程数量
     int index_; // 轮询分发的索引
-    EventLoop *base_loop_; // 主loop
+    EventLoop *basic_loop_; // 主loop
     ThreadUPtrList thread_list_; // 线程列表
     EventLoopList loop_list_;
 };

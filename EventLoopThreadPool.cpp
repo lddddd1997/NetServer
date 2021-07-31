@@ -6,10 +6,10 @@
 #include <EventLoopThreadPool.h>
 #include <iostream>
 
-EventLoopThreadPool::EventLoopThreadPool(EventLoop *base_loop, int thread_num) :
+EventLoopThreadPool::EventLoopThreadPool(EventLoop *basic_loop, int thread_num) :
     thread_num_(thread_num),
     index_(0),
-    base_loop_(base_loop)
+    basic_loop_(basic_loop)
 {
 
 }
@@ -31,7 +31,7 @@ void EventLoopThreadPool::Start()
 
 EventLoop* EventLoopThreadPool::GetNextLoop() // round robin轮询调度
 {
-    EventLoop *loop = base_loop_; // 若IO线程数量为0，则分配主loop
+    EventLoop *loop = basic_loop_; // 若IO线程数量为0，则分配主loop
     if(!thread_list_.empty())
     {
         loop = loop_list_[index_];
