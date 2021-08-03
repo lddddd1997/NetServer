@@ -17,7 +17,7 @@ public:
     EventLoopThread();
     ~EventLoopThread();
 
-    EventLoop* StartLoop(); // 启动线程，并获取当前线程的loop
+    EventLoop* StartLoop(); // 启动线程，并等待获取当前线程的loop
 
 private:
     std::thread thread_; // 线程

@@ -3,7 +3,6 @@
 * @brief    事件循环IO线程one loop per thread
 * @author   lddddd (https://github.com/lddddd1997)
 */
-
 #include <EventLoopThread.h>
 #include <iostream>
 
@@ -32,7 +31,7 @@ EventLoop* EventLoopThread::StartLoop()
         std::unique_lock<std::mutex> lock(mutex_);
         while(loop_ == nullptr)
         {
-            condition_.wait(lock); // 等待线程创建好后通知，否则会出现返回的loop为nullptr
+            condition_.wait(lock); // 等待线程创建好后通知，否则会出现返回的loop_为nullptr
         }
         loop = loop_;
     }
