@@ -67,7 +67,7 @@ void EventLoop::CommitTaskToLoop(const Task& task)
         task_list_.push_back(task); 
     }
     // std::cout << "WakeUp  " << wakeupfd_ << std::endl;
-    Wakeup(); // 跨线程唤醒，worker线程唤醒IO线程
+    Wakeup(); // 跨线程唤醒，唤醒IO线程
 }
 
 void EventLoop::Wakeup()

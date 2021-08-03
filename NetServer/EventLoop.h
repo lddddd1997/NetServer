@@ -36,7 +36,7 @@ public:
         return thread_id_;
     }
 
-    bool IsInLoopThread() const
+    bool IsInLoopThread() const // 判断当前调用的线程是否处于loop线程
     {
         return thread_id_ == std::this_thread::get_id();
     }
