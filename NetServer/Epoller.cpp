@@ -1,6 +1,6 @@
 /**
 * @file     Epoller.cpp
-* @brief    多路IO复用接口epoll的封装Epoller
+* @brief    多路IO复用接口epoll的封装
 * @author   lddddd (https://github.com/lddddd1997)
 */
 #include <Epoller.h>
