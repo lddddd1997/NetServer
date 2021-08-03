@@ -75,5 +75,4 @@ void Channel::EventsHandling()
             std::cout << "Lack of write_handler_" << std::endl;
         }
     }
-
 }
