@@ -8,9 +8,10 @@
 
 #include <string>
 #include <memory>
-#include <Channel.h>
-#include <EventLoop.h>
 #include <arpa/inet.h>
+#include <boost/any.hpp>
+#include "Channel.h"
+#include "EventLoop.h"
 
 class TcpConnection : public std::enable_shared_from_this<TcpConnection>
 {
@@ -29,10 +30,21 @@ public:
         // return fd_;
         return channel_->Fd();
     }
-
+    bool Connected()
+    {
+        return !disconnected_;
+    }
     EventLoop* Loop() const // 获取客户端所处的loop线程
     {
         return loop_;
+    }
+    void SetContext(const boost::any& context)
+    {
+        context_ = context;
+    }
+    const boost::any& Context() const
+    {
+        return context_;
     }
     struct sockaddr_in LocalAddress() const
     {
@@ -68,10 +80,11 @@ public:
     void Shutdown(); // 应用层调用的主动关闭连接接口
 
 private:
-    bool disconnected_;
+    std::atomic<bool> disconnected_;
     // int fd_;
     EventLoop *loop_;
     ChannelUPtr channel_;
+    boost::any context_;
     const struct sockaddr_in local_addr_; // 客户端的socket地址
     const struct sockaddr_in peer_addr_; // 服务端的socket地址
     std::string buffer_in_; // 接收缓冲区
