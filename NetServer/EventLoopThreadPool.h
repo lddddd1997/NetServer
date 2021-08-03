@@ -3,7 +3,6 @@
 * @brief    event loop线程池
 * @author   lddddd (https://github.com/lddddd1997)
 */
-
 #ifndef EVENT_LOOP_THREAD_POOL_H_
 #define EVENT_LOOP_THREAD_POOL_H_
 
@@ -27,7 +26,7 @@ private:
     int index_; // 轮询分发的索引
     EventLoop *basic_loop_; // 主loop
     ThreadUPtrList thread_list_; // 线程列表
-    EventLoopList loop_list_;
+    EventLoopList loop_list_; // loop列表
 };
 
 

@@ -29,7 +29,7 @@ void EventLoopThreadPool::Start()
     }
 }
 
-EventLoop* EventLoopThreadPool::GetNextLoop() // round robin轮询调度
+EventLoop* EventLoopThreadPool::GetNextLoop() // round robin轮询分发
 {
     EventLoop *loop = basic_loop_; // 若IO线程数量为0，则分配主loop
     if(!thread_list_.empty())
