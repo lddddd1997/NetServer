@@ -40,8 +40,6 @@ TcpServer::~TcpServer()
 void TcpServer::Start()
 {
     event_loop_thread_pool_.Start();
-
-    // basic_loop_->CommitChannelToEpoller(&server_channel_); // basic_loop_线程
     basic_loop_->CommitTaskToLoop(std::bind(&EventLoop::CommitChannelToEpoller, basic_loop_, &server_channel_));
 }
 
@@ -49,7 +47,7 @@ void TcpServer::NewConnectionHandler() // server_channel的EPOLLIN事件触发
 {
     struct sockaddr_in client_addr;
     int client_fd = 0;
-    while((client_fd = server_socket_.Accept(client_addr)) > 0) // 非阻塞处理，Accept封装accept4函数
+    while((client_fd = server_socket_.Accept(client_addr)) > 0) // 非阻塞处理
     {
         if(connections_map_.size() >= MAXCONNECTION)
         {
@@ -57,7 +55,7 @@ void TcpServer::NewConnectionHandler() // server_channel的EPOLLIN事件触发
             continue;
         }
         Utilities::SetNonBlock(client_fd); // 设置非阻塞IO
-        EventLoop *io_loop = event_loop_thread_pool_.GetNextLoop();
+        EventLoop *io_loop = event_loop_thread_pool_.GetNextLoop(); // 给新连接分配IO线程
         TcpConnectionSPtr new_connection = std::make_shared<TcpConnection>(io_loop, client_fd, client_addr, server_addr_);
         new_connection->SetMessageCallback(message_callback_);
         new_connection->SetWriteCompleteCallback(write_complete_callback_);
@@ -69,9 +67,9 @@ void TcpServer::NewConnectionHandler() // server_channel的EPOLLIN事件触发
         //     std::lock_guard<std::mutex> lock(mutex_);
         //     connections_map_[client_fd] = new_connection;
         // }
-        connections_map_[client_fd] = new_connection;
+        connections_map_[client_fd] = new_connection; // 加入hash map连接表中
         connection_callback_(new_connection);
-        new_connection->ConnectEstablished();
+        new_connection->ConnectEstablished(); // 初始化
         // std::cout << "New client connection, address = " << inet_ntoa(client_addr.sin_addr) << 
         // ":" << ntohs(client_addr.sin_port) << " client count = " << connections_map_.size() << std::endl;
         // std::cout << "Server, address = " << inet_ntoa(server_addr_.sin_addr) << 
