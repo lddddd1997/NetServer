@@ -1,6 +1,6 @@
 /**
 * @file     TcpConnection.h
-* @brief    tcp客户端连接，上层使用shared_ptr进行声明周期管理
+* @brief    tcp客户端连接，上层使用shared_ptr进行生命周期管理
 * @author   lddddd (https://github.com/lddddd1997)
 */
 #ifndef TCP_CONNECTION_H_
@@ -24,13 +24,13 @@ public:
                   const struct sockaddr_in& local_addr, const struct sockaddr_in& peer_addr);
     ~TcpConnection();
     
-    int Fd() const
+    int Fd() const // 获取客户端的文件描述符
     {
         // return fd_;
         return channel_->Fd();
     }
 
-    EventLoop *Loop() const
+    EventLoop* Loop() const // 获取客户端所处的loop线程
     {
         return loop_;
     }
@@ -63,31 +63,29 @@ public:
         connection_cleanup_ = cb;
     }
 
-    void ConnectEstablished();
-    void Send(const std::string& str);
-    void Shutdown();
+    void ConnectEstablished(); // 连接建立初始化，将客户端channel加入epoller
+    void Send(const std::string& str); // 应用层调用的数据发送接口
+    void Shutdown(); // 应用层调用的主动关闭连接接口
 
 private:
     bool disconnected_;
     // int fd_;
     EventLoop *loop_;
     ChannelUPtr channel_;
-    const struct sockaddr_in local_addr_;
-    const struct sockaddr_in peer_addr_;
-    // struct sockaddr_in local_addr_;
-    // struct sockaddr_in peer_addr_;
-    std::string buffer_in_;
-    std::string buffer_out_; 
+    const struct sockaddr_in local_addr_; // 客户端的socket地址
+    const struct sockaddr_in peer_addr_; // 服务端的socket地址
+    std::string buffer_in_; // 接收缓冲区
+    std::string buffer_out_;  // 发送缓冲区
     
-    MessageCallback message_callback_;
-    Callback write_complete_callback_;
-    Callback close_callback_;
-    Callback error_callback_;
-    Callback connection_cleanup_;
+    MessageCallback message_callback_; // 应用层消息回调
+    Callback write_complete_callback_; // 应用层写完回调
+    Callback close_callback_; // 应用层关闭连接回调
+    Callback error_callback_; // 应用层错误回调
+    Callback connection_cleanup_; // TcpServer层清理连接回调
 
-    void SendInLoop();
-    void ShutdownInLoop();
-    void ReadHandler();
+    void SendInLoop(); // 将Send投递到连接所处的loop线程
+    void ShutdownInLoop(); // 将Shutdown投递到连接所处的loop线程
+    void ReadHandler(); // channel各事件发生的处理
     void WriteHandler();
     void CloseHandler();
     void ErrorHandler();

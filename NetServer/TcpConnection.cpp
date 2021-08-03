@@ -31,13 +31,13 @@ TcpConnection::~TcpConnection() // TcpConnection的shared_ptr对象引用计数�
 {
     // std::cout << "TcpConnection::~TcpConnection" << std::endl;
     // loop_->CommitTaskToLoop(std::bind(&EventLoop::RemoveChannelFromEpoller, loop_, channel_.get())); // 无需清除，close后epoll会自动删除，，man文档Q6
-    close(channel_->Fd());
+    close(channel_->Fd()); // 关闭该连接
     assert(disconnected_); // 确认是否已经关闭
 }
 
 void TcpConnection::ConnectEstablished() // basic_loop线程接收新连接后，初始化
 {
-    // channel_->SetReadHandler(std::bind(&TcpConnection::ReadHandler, shared_from_this())); // fix不可取，bind绑定本对象至channel的function，会一直维持生命周期至channel释放，导致
+    // channel_->SetReadHandler(std::bind(&TcpConnection::ReadHandler, shared_from_this())); // fix不可取，bind绑定本对象至channel的function，会一直维持生命周期至channel释放，导致无法关闭连接
     // channel_->SetWriteHandler(std::bind(&TcpConnection::WriteHandler, shared_from_this()));
     // channel_->SetCloseHandler(std::bind(&TcpConnection::CloseHandler, shared_from_this()));
     // channel_->SetErrorHandler(std::bind(&TcpConnection::ErrorHandler, shared_from_this()));
@@ -126,7 +126,7 @@ void TcpConnection::ReadHandler()
         message_callback_(shared_from_this(), buffer_in_);
         // buffer_in_.clear();
     }
-    else if(nread == 0) // 客户端关闭socket，FIN，设置了EPOLLRDHUP事件，不会发生该情况
+    else if(nread == 0) // 客户端关闭socket，FIN，设置了优先处理EPOLLRDHUP事件，不会发生该情况
     {
         std::cout << "nread = 0" << std::endl;
         CloseHandler();
@@ -183,7 +183,7 @@ void TcpConnection::CloseHandler()
     {
         return ;
     }
-    TcpConnectionSPtr prolong = shared_from_this(); // 延长本对象的生命周期
+    TcpConnectionSPtr prolong = shared_from_this(); // 延长本对象的生命周期至该函数调用结束
     loop_->CommitTaskToLoop(std::bind(connection_cleanup_, shared_from_this())); // 交给TcpServer，从connections_map_中删除
     close_callback_(shared_from_this());
     disconnected_ = true;
@@ -195,7 +195,7 @@ void TcpConnection::ErrorHandler()
     {
         return ;
     }
-    TcpConnectionSPtr prolong = shared_from_this(); // 延长本对象的生命周期
+    TcpConnectionSPtr prolong = shared_from_this(); // 延长本对象的生命周期至该函数调用结束
     loop_->CommitTaskToLoop(std::bind(connection_cleanup_, shared_from_this())); // 交给TcpServer，从connections_map_中删除
     error_callback_(shared_from_this());
     disconnected_ = true;
