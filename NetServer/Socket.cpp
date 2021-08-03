@@ -71,7 +71,7 @@ void Socket::SetNonblock()
     Utilities::SetNonBlock(sockfd_); // 设置非阻塞IO
 }
 
-void Socket::BindAddress(int port)
+void Socket::BindAddress(int port) // 绑定socket地址
 {
     struct sockaddr_in server_addr;
     bzero(&server_addr, sizeof(server_addr));
