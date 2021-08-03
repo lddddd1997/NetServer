@@ -1,6 +1,6 @@
 /**
 * @file     ThreadPool.cpp
-* @brief    thread pool
+* @brief    业务线程池
 * @author   lddddd (https://github.com/lddddd1997)
 */
 #include <ThreadPool.h>
@@ -18,11 +18,6 @@ ThreadPool::~ThreadPool()
 {
     Stop();
     std::cout << "Clean up the business thread pool " << std::endl;
-    // for(int i = 0; i < thread_num_; i++)
-    // {
-    //     // thread_list_[i]->detach();
-    //     thread_list_[i]->join();
-    // }
     for(std::unique_ptr<std::thread>& thread : thread_list_)
     {
         // thread->detach();

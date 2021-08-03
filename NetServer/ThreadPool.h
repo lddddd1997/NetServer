@@ -1,6 +1,6 @@
 /**
 * @file     ThreadPool.h
-* @brief    thread pool
+* @brief    业务线程池
 * @author   lddddd (https://github.com/lddddd1997)
 */
 #ifndef THREAD_POOL_H_
@@ -29,7 +29,7 @@ public:
     void Stop()
     {
         running_ = false;
-        condition_.notify_all();
+        condition_.notify_all(); // 唤醒所有线程，从循环中退出
     }
 
     void CommitTaskToPool(const Task& task); // 向线程池提交任务
