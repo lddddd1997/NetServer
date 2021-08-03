@@ -7,9 +7,9 @@
 #define EVENT_LOOP_THREAD_H_
 
 #include <thread>
-#include <EventLoop.h>
 #include <mutex>
 #include <condition_variable>
+#include "EventLoop.h"
 
 class EventLoopThread
 {

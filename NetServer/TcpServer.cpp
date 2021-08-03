@@ -3,11 +3,11 @@
 * @brief    tcp服务器，管理tcp客户端的连接
 * @author   lddddd (https://github.com/lddddd1997)
 */
-#include <TcpServer.h>
 #include <unistd.h>
 #include <cstring>
 #include <iostream>
-#include <Utilities.h>
+#include "Utilities.h"
+#include "TcpServer.h"
 
 TcpServer::TcpServer(EventLoop *basic_loop, int port, int thread_num) :
     // conncount_(0),
@@ -68,8 +68,8 @@ void TcpServer::NewConnectionHandler() // server_channel的EPOLLIN事件触发
         //     connections_map_[client_fd] = new_connection;
         // }
         connections_map_[client_fd] = new_connection; // 加入hash map连接表中
-        connection_callback_(new_connection);
         new_connection->ConnectEstablished(); // 初始化
+        connection_callback_(new_connection);
         // std::cout << "New client connection, address = " << inet_ntoa(client_addr.sin_addr) << 
         // ":" << ntohs(client_addr.sin_port) << " client count = " << connections_map_.size() << std::endl;
         // std::cout << "Server, address = " << inet_ntoa(server_addr_.sin_addr) << 
