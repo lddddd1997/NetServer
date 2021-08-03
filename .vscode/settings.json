@@ -59,6 +59,7 @@
         "complex": "cpp",
         "set": "cpp",
         "iomanip": "cpp",
-        "cfenv": "cpp"
+        "cfenv": "cpp",
+        "*.ipp": "cpp"
     }
 }
