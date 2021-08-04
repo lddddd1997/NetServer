@@ -16,7 +16,6 @@
 class TcpConnection : public std::enable_shared_from_this<TcpConnection>
 {
 public:
-    using ChannelUPtr = std::unique_ptr<Channel>;
     using TcpConnectionSPtr = std::shared_ptr<TcpConnection>;
     using Callback = std::function<void(const TcpConnectionSPtr&)>;
     using MessageCallback = std::function<void(const TcpConnectionSPtr&, std::string&)>;
@@ -28,7 +27,7 @@ public:
     int Fd() const // 获取客户端的文件描述符
     {
         // return fd_;
-        return channel_->Fd();
+        return connection_channel_.Fd();
     }
     bool Connected()
     {
@@ -83,7 +82,7 @@ private:
     std::atomic<bool> disconnected_;
     // int fd_;
     EventLoop *loop_;
-    ChannelUPtr channel_;
+    Channel connection_channel_;
     boost::any context_;
     const struct sockaddr_in local_addr_; // 客户端的socket地址
     const struct sockaddr_in peer_addr_; // 服务端的socket地址
