@@ -27,5 +27,5 @@ Timestamp Timestamp::Now()
     struct timeval tv;
     gettimeofday(&tv, nullptr);
     int64_t seconds = tv.tv_sec;
-    return Timestamp(seconds * MICROSECONDSPERSECOND + tv.tv_usec);
+    return Timestamp(seconds * MICRO_SECONDS_PER_SECOND + tv.tv_usec);
 }

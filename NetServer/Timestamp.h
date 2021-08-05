@@ -13,22 +13,45 @@ class Timestamp
 {
 public:
     Timestamp();
-    Timestamp(int64_t msse);
+    explicit Timestamp(int64_t msse);
+    Timestamp(const Timestamp& timestamp) = default;
     ~Timestamp();
 
-    static Timestamp Now();
-
-    int MicroSecondsSinceEpoch() const
+    static Timestamp Now(); // 获取当前的时间戳
+    bool Valid()
+    {
+        return MicroSecondsSinceEpoch() > 0;
+    }
+    int64_t MicroSecondsSinceEpoch() const
     {
         return micro_seconds_since_epoch_;
     }
     time_t SecondsSinceEpoch() const
     {
-        return static_cast<time_t>(micro_seconds_since_epoch_ / MICROSECONDSPERSECOND);
+        return static_cast<time_t>(micro_seconds_since_epoch_ / MICRO_SECONDS_PER_SECOND);
     }
-    static const int MICROSECONDSPERSECOND = 1000 * 1000;
+
+    bool operator<(const Timestamp& rhs) const
+    {
+        return this->MicroSecondsSinceEpoch() < rhs.MicroSecondsSinceEpoch();
+    }
+    Timestamp operator+(const Timestamp& rhs)
+    {
+        return Timestamp(this->MicroSecondsSinceEpoch() + rhs.MicroSecondsSinceEpoch());
+    }
+    Timestamp operator+(double seconds)
+    {
+        return Timestamp(this->MicroSecondsSinceEpoch() + static_cast<int64_t>(seconds * MICRO_SECONDS_PER_SECOND));
+    }
+    bool operator==(const Timestamp& rhs) const
+    {
+        return this->MicroSecondsSinceEpoch() == rhs.MicroSecondsSinceEpoch();
+    }
+
+    static const int MICRO_SECONDS_PER_SECOND = 1000000;
+
 private:
-    int64_t micro_seconds_since_epoch_;
+    int64_t micro_seconds_since_epoch_; // since 1970-01-01 00:00:00
 };
 
 #endif
