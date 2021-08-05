@@ -13,7 +13,8 @@ EventLoop::EventLoop(const std::string& name) :
     quit_(true),
     thread_name_(name),
     thread_id_(std::this_thread::get_id()),
-    wakeup_channel_("wakeup")
+    wakeup_channel_("wakeup"),
+    timer_queue_(this)
 {
     wakeupfd_ = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
     // std::cout << "EventLoop " << wakeupfd_ << std::endl;
@@ -42,7 +43,7 @@ void EventLoop::Looping()
     while(!quit_)
     {
         active_channel_list_.clear();
-        epoller_.EpollWait(EPOLLTIMEOUT, active_channel_list_);
+        epoller_.EpollWait(EPOLL_TIMEOUT, active_channel_list_);
         for(Channel *channel : active_channel_list_)
         {
             current_active_channel_ = channel;
@@ -68,6 +69,21 @@ void EventLoop::CommitTaskToLoop(const Task& task)
     }
     // std::cout << "WakeUp  " << wakeupfd_ << std::endl;
     Wakeup(); // 跨线程唤醒，唤醒IO线程
+}
+
+void EventLoop::RunAt(Timestamp when, const TimerCallback& callback)
+{
+    timer_queue_.AddTimer(when, 0.0, callback);
+}
+
+void EventLoop::RunAfter(double delay_s, const TimerCallback& callback)
+{
+    RunAt(Timestamp::Now() + delay_s, callback);
+}
+
+void EventLoop::RunEvery(double interval_s, const TimerCallback& callback)
+{
+    timer_queue_.AddTimer(Timestamp::Now() + interval_s, interval_s, callback);
 }
 
 void EventLoop::Wakeup()
