@@ -29,7 +29,7 @@ public:
         // return fd_;
         return connection_channel_.Fd();
     }
-    bool Connected()
+    bool Connected() const
     {
         return !disconnected_;
     }
