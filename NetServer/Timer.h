@@ -16,6 +16,7 @@ public:
     Timer(Timestamp when, double interval, TimerCallback callback);
     ~Timer();
     
+    void ResetExpirationIfRepeat(Timestamp now); // 重置重复定时器的到期时间
     Timestamp Expiration() const
     {
         return expiration_;
@@ -33,7 +34,7 @@ private:
     Timestamp expiration_; // 到期时间
     double interval_; // 周期
     bool repeat_; // 是否循环，interval_>0.0则循环，反之不循环
-    TimerCallback timer_callback_;
+    TimerCallback timer_callback_; // 到期任务回调
 };
 
 #endif

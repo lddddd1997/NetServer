@@ -3,6 +3,7 @@
 * @brief    timer事件
 * @author   lddddd (https://github.com/lddddd1997)
 */
+#include <iostream>
 #include "Timer.h"
 
 Timer::Timer(Timestamp when, double interval, TimerCallback callback) :
@@ -16,5 +17,17 @@ Timer::Timer(Timestamp when, double interval, TimerCallback callback) :
 
 Timer::~Timer()
 {
+    std::cout << "Timer::~Timer" << std::endl;
+}
 
+void Timer::ResetExpirationIfRepeat(Timestamp now)
+{
+    if(repeat_)
+    {
+        expiration_ = now + interval_;
+    }
+    else
+    {
+        expiration_ = Timestamp();
+    }
 }
