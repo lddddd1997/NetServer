@@ -5,6 +5,7 @@
 */
 #include <boost/any.hpp>
 #include <iostream>
+#include <assert.h>
 #include "TimingWheel.h"
 
 ConnectionOnWheel::ConnectionOnWheel(const TcpConnectionWPtr& weak_conn) :
@@ -18,14 +19,15 @@ ConnectionOnWheel::~ConnectionOnWheel() // 时间轮上的Tcp连接的引用计�
     TcpConnectionSPtr connection = weak_connection_.lock();
     if(connection != nullptr)
     {
-        connection->Shutdown();
+        connection->Shutdown(); // 主动关闭连接
     }
 }
 
 TimingWheel::TimingWheel(int idle_seconds) :
     connection_buckets_(idle_seconds)
 {
-    connection_buckets_.resize(idle_seconds);
+    assert(idle_seconds > 0);
+    connection_buckets_.resize(idle_seconds); // 设置桶的个数
 }
 
 TimingWheel::~TimingWheel()
@@ -43,7 +45,7 @@ void TimingWheel::CommitNewConnection(const TcpConnectionSPtr& sp_tcp_connection
     if(sp_tcp_connection->Connected())
     {
         ConnectionOnWheelSPtr sp_connection_on_wheel(new ConnectionOnWheel(sp_tcp_connection));
-        connection_buckets_.back().insert(sp_connection_on_wheel);
+        connection_buckets_.back().insert(sp_connection_on_wheel); // 插入到最后一个桶
         ConnectionOnWheelWPtr wp_connection_on_wheel(sp_connection_on_wheel);
         sp_tcp_connection->SetContext(wp_connection_on_wheel);
     }

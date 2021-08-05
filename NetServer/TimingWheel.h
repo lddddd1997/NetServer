@@ -39,11 +39,11 @@ public:
     ~TimingWheel();
 
     void Start();
-    void CommitNewConnection(const TcpConnectionSPtr& sp_tcp_connection);
-    void Update(const TcpConnectionSPtr& sp_tcp_connection);
-    void TimeLapse();
+    void CommitNewConnection(const TcpConnectionSPtr& sp_tcp_connection); // 提交新的连接到时间轮的连接桶
+    void Update(const TcpConnectionSPtr& sp_tcp_connection); // 连接收到消息后，更新连接到连接桶
+    void TimeLapse(); // 定时处理，将轮子上过期的连接桶清除
 private:
-    ConnectionBuckets connection_buckets_;
+    ConnectionBuckets connection_buckets_; // 连接桶
 };
 
 #endif
