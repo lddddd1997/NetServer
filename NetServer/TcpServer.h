@@ -29,27 +29,22 @@ public:
     {
         message_callback_ = cb;
     }
-
     void SetWriteCompleteCallback(const Callback &cb)
     { 
         write_complete_callback_ = cb; 
     }
-
     void SetConnectionCallback(const Callback& cb)
     {
         connection_callback_ = cb;
     }
-
     void SetCloseCallback(const Callback& cb)
     {
         close_callback_ = cb;
     }
-
     void SetErrorCallback(const Callback& cb)
     {
         error_callback_ = cb;
     }
-
     int ConnectionsCount() const // 可能存在线程安全？？？
     {
         return connections_map_.size();
@@ -70,7 +65,7 @@ private:
     Callback close_callback_; // 应用层关闭连接回调
     Callback error_callback_; // 应用层错误回调
 
-    static const int MAXCONNECTION = 30000; // 限制最大连接数量
+    static const int MAX_CONNECTION = 30000; // 限制最大连接数量
 
     void NewConnectionHandler(); // socket可读（有新连接）处理
     void ConnectionErrorHandler();

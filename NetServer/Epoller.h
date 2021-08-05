@@ -30,7 +30,7 @@ private:
     int epollfd_; // epoll文件描述符
     EventList event_list_; // events数组，epoll_wait的传出参数
     ChannelHashMap channel_map_; // 事件集合
-    static const int EVENTLISTSIZE = 16; // 初始events数组大小
+    static const int EVENT_LIST_SIZE = 16; // 初始events数组大小
     void FilleActiveChannels(int nfds, ChannelPtrList &active_channel_list); // 填充活跃事件
 };
 

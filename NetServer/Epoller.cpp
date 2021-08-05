@@ -8,7 +8,7 @@
 #include "Epoller.h"
 
 Epoller::Epoller() :
-    event_list_(EVENTLISTSIZE)
+    event_list_(EVENT_LIST_SIZE)
 {
     epollfd_ = epoll_create1(EPOLL_CLOEXEC); // epoll_create
     if(epollfd_ == -1)

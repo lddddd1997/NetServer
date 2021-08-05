@@ -49,7 +49,7 @@ void TcpServer::NewConnectionHandler() // server_channel的EPOLLIN事件触发
     int client_fd = 0;
     while((client_fd = server_socket_.Accept(client_addr)) > 0) // 非阻塞处理
     {
-        if(connections_map_.size() >= MAXCONNECTION)
+        if(connections_map_.size() >= MAX_CONNECTION)
         {
             close(client_fd);
             continue;
