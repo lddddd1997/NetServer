@@ -3,17 +3,19 @@
 * @brief    echo服务器
 * @author   lddddd (https://github.com/lddddd1997)
 */
-#include <EchoServer.h>
 #include <iostream>
+#include "EchoServer.h"
 
-EchoServer::EchoServer(EventLoop *basic_loop, int port, int thread_num) :
-    tcp_server_(basic_loop, port, thread_num)
+EchoServer::EchoServer(EventLoop *basic_loop, int port, int thread_num, int idle_seconds) :
+    tcp_server_(basic_loop, port, thread_num),
+    timing_wheel_(idle_seconds)
 {
     tcp_server_.SetMessageCallback(std::bind(&EchoServer::MessageCallback, this, std::placeholders::_1, std::placeholders::_2));
     tcp_server_.SetWriteCompleteCallback(std::bind(&EchoServer::WriteCompleteCallback, this, std::placeholders::_1));
     tcp_server_.SetConnectionCallback(std::bind(&EchoServer::ConnectionCallback, this, std::placeholders::_1));
     tcp_server_.SetCloseCallback(std::bind(&EchoServer::CloseCallback, this, std::placeholders::_1));
     tcp_server_.SetErrorCallback(std::bind(&EchoServer::ErrorCallback, this, std::placeholders::_1));
+    basic_loop->RunEvery(1.0, std::bind(&EchoServer::OnTimer, this));
 }
 
 EchoServer::~EchoServer()
@@ -24,7 +26,13 @@ EchoServer::~EchoServer()
 void EchoServer::Start()
 {
     std::cout << "Echo server start..." << std::endl;
+    timing_wheel_.Start();
     tcp_server_.Start();
+}
+
+void EchoServer::OnTimer()
+{
+    timing_wheel_.TimeLapse();
 }
 
 void EchoServer::MessageCallback(const TcpConnectionSPtr& connection, std::string& message)
@@ -34,7 +42,7 @@ void EchoServer::MessageCallback(const TcpConnectionSPtr& connection, std::strin
     std::cout << "receive " << msg.size() - 1 << " byte massage from client address = " << inet_ntoa(connection->LocalAddress().sin_addr) << 
     ":" << ntohs(connection->LocalAddress().sin_port) << std::endl << ">> " << msg << std::endl;
     connection->Send(msg);
-    connection->Shutdown();
+    timing_wheel_.Update(connection);
 }
 
 void EchoServer::WriteCompleteCallback(const TcpConnectionSPtr& connection)
@@ -46,6 +54,8 @@ void EchoServer::ConnectionCallback(const TcpConnectionSPtr& connection)
 {
     std::cout << "New client connection, address = " << inet_ntoa(connection->LocalAddress().sin_addr) << 
     ":" << ntohs(connection->LocalAddress().sin_port) << ", client count = " << ClientsCount() << std::endl;
+    
+    timing_wheel_.CommitNewConnection(connection);
     // std::cout << "-----------------TcpServer connection callback" << std::endl;
 }
 
