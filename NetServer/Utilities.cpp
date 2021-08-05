@@ -36,10 +36,10 @@ ssize_t Utilities::Readn(int fd, std::string& buffer_in)
 {
     ssize_t nread = 0;
     ssize_t read_sum = 0;
-    char buff[BUFESIZE];
+    char buff[BUFER_SIZE];
     while(true)
     {
-        if((nread = read(fd, buff, BUFESIZE)) < 0)
+        if((nread = read(fd, buff, BUFER_SIZE)) < 0)
         {
             if(errno == EAGAIN) // 系统缓冲区没有数据，非阻塞返回
             {
