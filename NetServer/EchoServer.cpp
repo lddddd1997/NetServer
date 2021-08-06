@@ -41,6 +41,12 @@ void EchoServer::MessageCallback(const TcpConnectionSPtr& connection, std::strin
     msg.swap(message);
     std::cout << "receive " << msg.size() - 1 << " byte massage from client address = " << inet_ntoa(connection->LocalAddress().sin_addr) << 
     ":" << ntohs(connection->LocalAddress().sin_port) << std::endl << ">> " << msg << std::endl;
+    // connection->Send(msg);
+    msg.clear();
+    msg.resize(32);
+    time_t now = time(nullptr);
+    struct tm tm_now = *localtime(&now); // 内部锁机制，效率差
+    snprintf(&*msg.begin(), msg.size(), "%4d-%02d-%02d %02d:%02d:%02d\n", tm_now.tm_year+1900, tm_now.tm_mon+1, tm_now.tm_mday, tm_now.tm_hour, tm_now.tm_min, tm_now.tm_sec);
     connection->Send(msg);
     timing_wheel_.Update(connection);
 }
