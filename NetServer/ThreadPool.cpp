@@ -18,11 +18,6 @@ ThreadPool::~ThreadPool()
 {
     Stop();
     std::cout << "Clean up the business thread pool " << std::endl;
-    for(std::unique_ptr<std::thread>& thread : thread_list_)
-    {
-        // thread->detach();
-        thread->join();
-    }
 }
 
 void ThreadPool::Start()

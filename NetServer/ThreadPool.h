@@ -30,6 +30,11 @@ public:
     {
         running_ = false;
         condition_.notify_all(); // 唤醒所有线程，从循环中退出
+        for(std::unique_ptr<std::thread>& thread : thread_list_)
+        {
+            // thread->detach();
+            thread->join();
+        }
     }
 
     void CommitTaskToPool(const Task& task); // 向线程池提交任务
