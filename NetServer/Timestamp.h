@@ -7,6 +7,7 @@
 #define TIMESTAMP_H_
 
 #include <stdint.h>
+#include <string>
 #include <sys/time.h>
 
 class Timestamp
@@ -18,7 +19,8 @@ public:
     ~Timestamp();
 
     static Timestamp Now(); // 获取当前的时间戳
-    bool Valid()
+    std::string ToFormattedString(bool show_micro_seconds = true); const
+    bool Valid() const
     {
         return MicroSecondsSinceEpoch() > 0;
     }
@@ -35,11 +37,11 @@ public:
     {
         return this->MicroSecondsSinceEpoch() < rhs.MicroSecondsSinceEpoch();
     }
-    Timestamp operator+(const Timestamp& rhs)
+    Timestamp operator+(const Timestamp& rhs) const
     {
         return Timestamp(this->MicroSecondsSinceEpoch() + rhs.MicroSecondsSinceEpoch());
     }
-    Timestamp operator+(double seconds)
+    Timestamp operator+(double seconds) const
     {
         return Timestamp(this->MicroSecondsSinceEpoch() + static_cast<int64_t>(seconds * MICRO_SECONDS_PER_SECOND));
     }
