@@ -18,6 +18,8 @@ public:
     static void SetNonBlock(int fd); // 设置文件描述符为非阻塞
     static ssize_t Readn(int fd, std::string& buffer_in); // 循环读取，直到error == EAGAIN
     static ssize_t Writen(int fd, std::string& buffer_out); // 循环写，直到error == EAGAIN
+    static std::string Hostname();
+    static pid_t Pid();
 };
 
 #endif

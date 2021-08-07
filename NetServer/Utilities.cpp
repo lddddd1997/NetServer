@@ -1,5 +1,5 @@
 /**
-* @file     Utilities.h
+* @file     Utilities.cpp
 * @brief    Utilities
 * @author   lddddd (https://github.com/lddddd1997)
 */
@@ -102,4 +102,25 @@ ssize_t Utilities::Writen(int fd, std::string& buffer_out)
     }
     buffer_out = buffer_out.substr(written_sum);
     return written_sum;
+}
+
+std::string Utilities::Hostname()
+    {
+        // HOST_NAME_MAX 64
+        // _POSIX_HOST_NAME_MAX 255
+        char buf[256];
+        if (gethostname(buf, sizeof buf) == 0)
+        {
+            buf[sizeof(buf)-1] = '\0';
+            return buf;
+        }
+        else
+        {
+            return "unknownhost";
+        }
+    }
+
+pid_t Utilities::Pid()
+{
+    return getpid();
 }
