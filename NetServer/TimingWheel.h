@@ -1,5 +1,5 @@
 /**
-* @file     TimingWheel.cpp
+* @file     TimingWheel.h
 * @brief    时间轮，剔除空闲连接
 * @author   lddddd (https://github.com/lddddd1997)
 */
