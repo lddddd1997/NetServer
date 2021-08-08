@@ -25,7 +25,7 @@ Timestamp::~Timestamp()
 Timestamp Timestamp::Now()
 {
     struct timeval tv;
-    gettimeofday(&tv, nullptr); // 不是系统调用，不会陷入内核
+    gettimeofday(&tv, nullptr); // UTC时间，不是系统调用，不会陷入内核
     int64_t seconds = tv.tv_sec;
     return Timestamp(seconds * MICRO_SECONDS_PER_SECOND + tv.tv_usec);
 }

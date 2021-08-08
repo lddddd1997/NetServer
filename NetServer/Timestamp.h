@@ -53,7 +53,7 @@ public:
     static const int MICRO_SECONDS_PER_SECOND = 1000000;
 
 private:
-    int64_t micro_seconds_since_epoch_; // since 1970-01-01 00:00:00
+    int64_t micro_seconds_since_epoch_; // since 1970-01-01 00:00:00的UTC时间
 };
 
 #endif
