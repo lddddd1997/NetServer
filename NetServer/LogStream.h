@@ -42,7 +42,7 @@ public:
     {
         return static_cast<int>(cur_ - data_);
     }
-    char* Current()
+    char* Current() const
     {
         return cur_;
     }
@@ -77,6 +77,15 @@ public:
 
     LogStream();
     ~LogStream();
+
+    const Buffer& FormatBuffer() const
+    {
+        return buffer_;
+    }
+    void ResetBuffer()
+    {
+        buffer_.Reset();
+    }
     
     LogStream& operator<<(bool v)
     {
