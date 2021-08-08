@@ -19,7 +19,10 @@ EventLoopThread::~EventLoopThread()
     if(loop_ != nullptr)
     {
         loop_->Quit();
-        thread_.join(); // 清理IO线程
+        if(thread_.joinable())
+        {
+            thread_.join(); // 清理IO线程
+        }
     }
 }
 

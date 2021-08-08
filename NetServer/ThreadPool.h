@@ -33,7 +33,10 @@ public:
         for(std::unique_ptr<std::thread>& thread : thread_list_)
         {
             // thread->detach();
-            thread->join();
+            if(thread->joinable())
+            {
+                thread->join();
+            }
         }
     }
 
@@ -56,7 +59,7 @@ public:
     }
 
 private:
-    std::atomic<int> thread_num_; // 线程池的线程总数量（定义为原子类型，多线程中无需加锁，不会被CPU调度打断）
+    std::atomic<int> thread_num_; // 线程池的线程总数量（定义为原子类型，多线程同时读写时无需加锁，不会被CPU调度打断，但atomic使用非POD会导致未定义行为）
     std::atomic<int> idle_thread_num_; // 空闲线程数量
     std::atomic<bool> running_; // 线程池是否在工作
     ThreadUPtrList thread_list_; // 线程列表
