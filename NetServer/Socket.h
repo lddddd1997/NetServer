@@ -3,10 +3,10 @@
 * @brief    socket封装
 * @author   lddddd (https://github.com/lddddd1997)
 */
-#include <arpa/inet.h>
-
 #ifndef SOCKET_H_
 #define SOCKET_H_
+
+#include <arpa/inet.h>
 
 class Socket
 {

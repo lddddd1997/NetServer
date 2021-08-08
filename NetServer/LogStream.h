@@ -4,6 +4,9 @@
 * @author   lddddd (https://github.com/lddddd1997)
 * TODO:     使用c++20的format替代snprintf的格式化
 */
+#ifndef LOG_STREAM_H_
+#define LOG_STREAM_H_
+
 #include <cstring>
 #include <string>
 #include <iostream>
@@ -191,3 +194,5 @@ public:
 private:
     Buffer buffer_;
 };
+
+#endif
