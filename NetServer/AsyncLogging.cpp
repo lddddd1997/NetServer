@@ -20,16 +20,26 @@ AsyncLogging::AsyncLogging(const std::string& base_name, int roll_size, int flus
     current_buffer_->Bzero();
     spare_buffer_->Bzero();
     buffers_.reserve(16);
+    if(roll_size_ < LogStream::LARGE_BUFFER)
+    {
+        std::cout << "Suggest that roll_size_ > LARGE_BUFFER" << std::endl;
+    }
 }
 
 AsyncLogging::~AsyncLogging()
 {
     Stop();
-    std::cout << "Clean up the business thread pool " << std::endl;
+    std::cout << "Clean up the async logging thread " << std::endl;
 }
 
 void AsyncLogging::Append(const char *log_line, int len)
 {
+    if(!running_)
+    {
+        std::cout << "Waiting for thread running..." << std::endl;
+        return ;
+    }
+    
     std::lock_guard<std::mutex> lock(mutex_);
     if(current_buffer_->Avail() > len)
     {
@@ -54,13 +64,14 @@ void AsyncLogging::Append(const char *log_line, int len)
 void AsyncLogging::RunInThread()
 {
     assert(running_ == true);
-    LogFile log_output(base_name_, roll_size_, false);
+    LogFile log_output(base_name_, roll_size_);
     BufferUPtr new_buffer1(new Buffer);
     BufferUPtr new_buffer2(new Buffer);
     new_buffer1->Bzero();
     new_buffer2->Bzero();
     BufferList buffers_to_write;
     buffers_to_write.reserve(16);
+    std::cout << "The async logging thread is running, thread id = " << std::this_thread::get_id() << std::endl;
     while(running_)
     {
         assert(buffers_to_write.empty());
@@ -86,7 +97,7 @@ void AsyncLogging::RunInThread()
                Timestamp::Now().ToFormattedString().c_str(),
                buffers_to_write.size() - 2);
             fputs(buf, stderr);
-            log_output.AppendUnlocked(buf, static_cast<int>(strlen(buf)));
+            log_output.AppendUnlocked(buf, static_cast<int>(strlen(buf))); // 单线程处理，无需加锁
             buffers_to_write.erase(buffers_to_write.begin() + 2, buffers_to_write.end());
         }
 

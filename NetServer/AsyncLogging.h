@@ -20,7 +20,7 @@ public:
     using Buffer = FixedBuffer<LogStream::LARGE_BUFFER>;
     using BufferUPtr = std::unique_ptr<Buffer>;
     using BufferList = std::vector<BufferUPtr>;
-    AsyncLogging(const std::string& base_name, int roll_size, int flush_interval = 3);
+    AsyncLogging(const std::string& base_name, int roll_size, int flush_interval = 3); // 最好roll_size > LARGE_BUFFER，因为当buffer超过LARGE_BUFFER或3s超时才会判断是否需要创建文件
     ~AsyncLogging();
 
     void Start()
@@ -32,7 +32,10 @@ public:
     {
         running_ = false;
         condition_.notify_all();
-        log_thread_.join();
+        if(log_thread_.joinable())
+        {
+            log_thread_.join();
+        }
     }
     void Append(const char *log_line, int len);
     
