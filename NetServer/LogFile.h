@@ -15,7 +15,7 @@ public:
     explicit AppendFile(const std::string& file_name);
     ~AppendFile();
 
-    void Append(const char* logline, size_t len);
+    void Append(const char *logline, size_t len);
     void Flush();
     off_t WrittenBytes() const
     {
@@ -26,7 +26,7 @@ private:
     FILE* fp_;
     char buffer_[64 * 1024];
     off_t written_bytes_;
-    size_t Write(const char* logline, size_t len);
+    size_t Write(const char *logline, size_t len);
 };
 
 class LogFile
@@ -35,7 +35,7 @@ public:
     LogFile(const std::string& base_name, off_t roll_size, int flush_interval = 3, int check_every_count = 1024);
     ~LogFile();
 
-    void AppendUnlocked(const char* logline, int len);
+    void AppendUnlocked(const char *logline, int len);
     void Flush();
 
 private:

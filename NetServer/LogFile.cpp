@@ -21,10 +21,10 @@ AppendFile::~AppendFile()
     fclose(fp_);
 }
 
-void AppendFile::Append(const char* logline, size_t len)
+void AppendFile::Append(const char *logline, size_t len)
 {
     size_t written = 0;
-    while (written != len)
+    while(written != len)
     {
         size_t remain = len - written;
         size_t n = Write(logline + written, remain);
@@ -39,7 +39,6 @@ void AppendFile::Append(const char* logline, size_t len)
         }
         written += n;
     }
-
     written_bytes_ += written;
 }
 
@@ -48,7 +47,7 @@ void AppendFile::Flush()
     fflush(fp_);
 }
 
-size_t AppendFile::Write(const char* logline, size_t len)
+size_t AppendFile::Write(const char *logline, size_t len)
 {
     return fwrite_unlocked(logline, 1, len, fp_); // fwrite线程安全,但效率低
 }
@@ -72,7 +71,7 @@ LogFile::~LogFile()
 
 }
 
-void LogFile::AppendUnlocked(const char* logline, int len)
+void LogFile::AppendUnlocked(const char *logline, int len)
 {
     file_->Append(logline, len);
     if(file_->WrittenBytes() > roll_size_)
@@ -86,7 +85,7 @@ void LogFile::AppendUnlocked(const char* logline, int len)
         {
             count_ = 0;
             time_t now = time(nullptr);
-            time_t this_period = now / ROLL_PER_SECONDS * ROLL_PER_SECONDS; // ????
+            time_t this_period = now / ROLL_PER_SECONDS * ROLL_PER_SECONDS; // 去除小于该周期的秒数，即每过一周期+ROLL_PER_SECONDS
             if(this_period != start_of_period_)
             {
                 RollFile();
@@ -108,10 +107,10 @@ void LogFile::Flush()
 bool LogFile::RollFile()
 {
     time_t now = 0;
-    std::string file_name = GetLogFileName(&now);
+    std::string file_name = GetLogFileName(&now); // 由于now的时间精度为s，如果前端发送太快，则文件名与上一秒的一致，则不会创建文件
     time_t start = now / ROLL_PER_SECONDS * ROLL_PER_SECONDS;
 
-    if (now > last_roll_)
+    if(now > last_roll_) // 由于now的时间精度为s，如果前端发送太快，则不会创建文件
     {
         last_roll_ = now;
         last_flush_ = now;
@@ -130,15 +129,15 @@ std::string LogFile::GetLogFileName(time_t *now)
 
     char time_buf[32];
     struct tm tm;
-    *now = time(nullptr);
-    gmtime_r(now, &tm);
+    *now = time(nullptr); // 精度为s
+    gmtime_r(now, &tm); // UTC时间，未转化成本地时间（localtime函数为本地时间，但效率差）
     strftime(time_buf, sizeof(time_buf), ".%Y%m%d-%H%M%S.", &tm);
     file_name += time_buf;
 
     file_name += Utilities::Hostname();
 
     char pidbuf[32];
-    snprintf(pidbuf, sizeof pidbuf, ".%d", Utilities::Pid());
+    snprintf(pidbuf, sizeof(pidbuf), ".%d", Utilities::Pid());
     file_name += pidbuf;
 
     file_name += ".log";
