@@ -3,8 +3,8 @@
 * @brief    时间轮，剔除空闲连接
 * @author   lddddd (https://github.com/lddddd1997)
 */
-#ifndef CONNECTION_ON_WHEEL_H_
-#define CONNECTION_ON_WHEEL_H_
+#ifndef TIMING_WHEEL_H_
+#define TIMING_WHEEL_H_
 
 #include <memory>
 #include <boost/circular_buffer.hpp>
