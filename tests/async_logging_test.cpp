@@ -14,14 +14,15 @@ int main()
     {
         // struct timeval tv1;
         // gettimeofday(&tv1, nullptr);
-        log.Append("0978654321", 10);
-        log.Append("1234567890", 10);
+        log.Append("978654321\n", 10);
+        log.Append("123456789\n", 10);
         // log.Append(str.c_str(), sizeof(str));
-        usleep(10);
+        // usleep(10);
         // struct timeval tv2;
         // gettimeofday(&tv2, nullptr);
         // cout << tv2.tv_usec - tv1.tv_usec << endl;
     }
+    log.Stop();
     std::cout << "Finished" << std::endl;
     while(1);
     return 0;
