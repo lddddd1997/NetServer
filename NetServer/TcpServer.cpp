@@ -8,6 +8,7 @@
 #include <iostream>
 #include "Utilities.h"
 #include "TcpServer.h"
+#include "Logger.h"
 
 TcpServer::TcpServer(EventLoop *basic_loop, int port, int thread_num) :
     // conncount_(0),
@@ -74,18 +75,26 @@ void TcpServer::NewConnectionHandler() // server_channel的EPOLLIN事件触发
         // ":" << ntohs(client_addr.sin_port) << " client count = " << connections_map_.size() << std::endl;
         // std::cout << "Server, address = " << inet_ntoa(server_addr_.sin_addr) << 
         // ":" << ntohs(server_addr_.sin_port) << " client_fd = " << client_fd << std::endl;
+        LOG_INFO << "New connection " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port)
+                << " from " << inet_ntoa(server_addr_.sin_addr) << ":" << ntohs(server_addr_.sin_port)
+                << " client count = " << connections_map_.size();
     }
 }
 
 void TcpServer::ConnectionErrorHandler()
 {
-    std::cout << "connection error" << std::endl;
+    // std::cout << "connection error" << std::endl;
+    LOG_ERROR << "Connection error";
     close(server_socket_.Fd());
 }
 
 void TcpServer::RemoveConnectionFromMap(const TcpConnectionSPtr& connection)
 {
     basic_loop_->CommitTaskToLoop(std::bind(&TcpServer::RemoveConnectionInLoop, this, connection)); // 投递到basic_loop_，解决线程安全问题
+    LOG_INFO << "Remove connection " << inet_ntoa(connection->LocalAddress().sin_addr)
+            << ":" << ntohs(connection->LocalAddress().sin_port)
+            << " from " << inet_ntoa(connection->PeerAddress().sin_addr)
+            << ":" << ntohs(connection->PeerAddress().sin_port);
 }
 
 void TcpServer::RemoveConnectionInLoop(const TcpConnectionSPtr& connection)
