@@ -25,7 +25,7 @@ public:
 
     }
 
-    void Append(const char *buf, size_t len)
+    void Append(const char *buf, size_t len) // 添加数据到data
     {
         if(static_cast<size_t>(Avail()) > len)
         {
@@ -34,38 +34,38 @@ public:
         }
         else
         {
-            std::cout << "Exceed the single write length" << std::endl;
+            std::cout << "Buffer size exceeded" << std::endl;
         }
     }
-    const char* Data() const
+    const char* Data() const // 返回数据首地址
     {
         return data_;
     }
-    int Length() const
+    int Length() const // 已写入的长度
     {
         return static_cast<int>(cur_ - data_);
     }
-    char* Current() const
+    char* Current() const // 获得当前位置指针
     {
         return cur_;
     }
-    void Reset()
+    void Reset() // 重置当前指针
     {
         cur_ = data_;
     }
-    void Bzero()
+    void Bzero() // 将data置0
     {
         bzero(data_, sizeof(data_));
     }
-    int Avail() const
+    int Avail() const // 返回可写的字节数
     {
         return static_cast<int>(End() - cur_);
     }
 private:
     char data_[SIZE];
-    char *cur_;
+    char *cur_; // 当前指针位置
 
-    const char* End() const
+    const char* End() const // 数据结尾指针，相当于容器的end()迭代器
     {
         return data_ + sizeof(data_);
     }
@@ -81,15 +81,16 @@ public:
     LogStream();
     ~LogStream();
 
-    const Buffer& FormatBuffer() const
+    const Buffer& FormatBuffer() const // 返回格式化的日志流
     {
         return buffer_;
     }
-    void ResetBuffer()
+    void ResetBuffer() // 日志流重置
     {
         buffer_.Reset();
     }
     
+    // 各种数据的格式化，使用snprintf，或许还可以用其他方法优化，如C20的format
     LogStream& operator<<(bool v)
     {
         buffer_.Append(v ? "1" : "0", 1);
@@ -192,7 +193,7 @@ public:
         return *this;
     }
 private:
-    Buffer buffer_;
+    Buffer buffer_; // 日志流缓冲区
 };
 
 #endif

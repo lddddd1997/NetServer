@@ -62,7 +62,7 @@ LogFile::LogFile(const std::string& base_name, off_t roll_size, int flush_interv
     last_roll_(0),
     last_flush_(0)
 {
-    assert(base_name_.find('/') == std::string::npos);
+    assert(base_name_.find('/') == std::string::npos); // 确保文件前缀名没有/
     RollFile();
 }
 
@@ -74,7 +74,7 @@ LogFile::~LogFile()
 void LogFile::AppendUnlocked(const char *logline, int len)
 {
     file_->Append(logline, len);
-    if(file_->WrittenBytes() > roll_size_)
+    if(file_->WrittenBytes() > roll_size_) // 已写入的字节数大于滚动日志文件的大小，则创建
     {
         RollFile();
     }
@@ -85,8 +85,8 @@ void LogFile::AppendUnlocked(const char *logline, int len)
         {
             count_ = 0;
             time_t now = time(nullptr);
-            time_t this_period = now / ROLL_PER_SECONDS * ROLL_PER_SECONDS; // 去除小于该周期的秒数，即每过一周期+ROLL_PER_SECONDS
-            if(this_period != start_of_period_)
+            time_t this_period = now / ROLL_PER_SECONDS * ROLL_PER_SECONDS; // 去除小于该周期的秒数，即每过一个周期+ROLL_PER_SECONDS
+            if(this_period != start_of_period_) // 每过一个周期，则创建
             {
                 RollFile();
             }
@@ -107,7 +107,7 @@ void LogFile::Flush()
 bool LogFile::RollFile()
 {
     time_t now = 0;
-    std::string file_name = GetLogFileName(&now); // 由于now的时间精度为s，如果前端发送太快，则文件名与上一秒的一致，则不会创建文件
+    std::string file_name = FormatLogFileName(&now); // 由于now的时间精度为s，如果前端发送太快，则文件名与上一秒的一致，则不会创建文件
     time_t start = now / ROLL_PER_SECONDS * ROLL_PER_SECONDS;
 
     if(now > last_roll_) // 由于now的时间精度为s，如果前端发送太快，则不会创建文件
@@ -121,7 +121,7 @@ bool LogFile::RollFile()
     return false;
 }
 
-std::string LogFile::GetLogFileName(time_t *now)
+std::string LogFile::FormatLogFileName(time_t *now)
 {
     std::string file_name;
     file_name.reserve(base_name_.size() + 64);
@@ -142,5 +142,5 @@ std::string LogFile::GetLogFileName(time_t *now)
 
     file_name += ".log";
 
-    return file_name;
+    return file_name; // base_name.time.hostname.pid.log
 }

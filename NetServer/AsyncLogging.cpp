@@ -20,10 +20,6 @@ AsyncLogging::AsyncLogging(const std::string& base_name, int roll_size, int flus
     current_buffer_->Bzero();
     spare_buffer_->Bzero();
     buffers_.reserve(16);
-    if(roll_size_ < LogStream::LARGE_BUFFER)
-    {
-        std::cout << "Suggest that roll_size_ > LARGE_BUFFER" << std::endl;
-    }
 }
 
 AsyncLogging::~AsyncLogging()
@@ -40,12 +36,12 @@ void AsyncLogging::Append(const char *log_line, int len)
         return ;
     }
     
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_); // 存在多线程同时调用，需上锁
     if(current_buffer_->Avail() > len)
     {
         current_buffer_->Append(log_line, len);
     }
-    else
+    else // 写满了
     {
         buffers_.push_back(std::move(current_buffer_)); // 右值引用，转移所有权后，current_buffer_ == nullptr
         if(spare_buffer_ != nullptr)
@@ -57,7 +53,7 @@ void AsyncLogging::Append(const char *log_line, int len)
             current_buffer_.reset(new Buffer);
         }
         current_buffer_->Append(log_line, len);
-        condition_.notify_one();
+        condition_.notify_one(); // 通知消费者，多生产者，单消费者模型
     }
 }
 
@@ -81,7 +77,7 @@ void AsyncLogging::RunInThread()
             {
                 condition_.wait_for(lock, std::chrono::seconds(flush_interval_)); // 超时返回std::cv_status::timeout
             }
-            buffers_.push_back(std::move(current_buffer_));
+            buffers_.push_back(std::move(current_buffer_)); // 当前写入缓冲区可能没满
             current_buffer_ = std::move(new_buffer1);
             buffers_to_write.swap(buffers_);
             if(spare_buffer_ == nullptr)
@@ -90,7 +86,7 @@ void AsyncLogging::RunInThread()
             }
         }
 
-        if(buffers_to_write.size() > 25)
+        if(buffers_to_write.size() > 25) // 生产速度远高于消费速度，将丢掉多余日志
         {
             char buf[256];
             snprintf(buf, sizeof buf, "Dropped log messages at %s, %zd larger buffers\n",
@@ -103,7 +99,7 @@ void AsyncLogging::RunInThread()
 
         for(const BufferUPtr& buffer : buffers_to_write)
         {
-            log_output.AppendUnlocked(buffer->Data(), buffer->Length());
+            log_output.AppendUnlocked(buffer->Data(), buffer->Length()); // 后端将前端日志持久化
         }
         if(buffers_to_write.size() > 2)
         {
@@ -113,7 +109,7 @@ void AsyncLogging::RunInThread()
         if(new_buffer1 == nullptr)
         {
             assert(!buffers_to_write.empty());
-            new_buffer1 = std::move(buffers_to_write.back());
+            new_buffer1 = std::move(buffers_to_write.back()); // 归还缓冲区
             buffers_to_write.pop_back();
             new_buffer1->Reset();
         }
@@ -125,7 +121,7 @@ void AsyncLogging::RunInThread()
             new_buffer2->Reset();
         }
         buffers_to_write.clear();
-        log_output.Flush();
+        log_output.Flush(); // 刷新到文件
     }
     log_output.Flush();
 }
