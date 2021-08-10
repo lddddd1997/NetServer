@@ -44,6 +44,7 @@ void TimingWheel::CommitNewConnection(const TcpConnectionSPtr& sp_tcp_connection
 {
     if(sp_tcp_connection->Connected())
     {
+        std::lock_guard<std::mutex> lock(mutex_);
         ConnectionOnWheelSPtr sp_connection_on_wheel(new ConnectionOnWheel(sp_tcp_connection));
         connection_buckets_.back().insert(sp_connection_on_wheel); // 插入到最后一个桶
         ConnectionOnWheelWPtr wp_connection_on_wheel(sp_connection_on_wheel);
@@ -61,11 +62,13 @@ void TimingWheel::Update(const TcpConnectionSPtr& sp_tcp_connection) // 更新�
     ConnectionOnWheelSPtr sp_connection_on_wheel(wp_connection_on_wheel.lock());
     if(sp_connection_on_wheel != nullptr)
     {
+        std::lock_guard<std::mutex> lock(mutex_);
         connection_buckets_.back().insert(sp_connection_on_wheel);
     }
 }
 
 void TimingWheel::TimeLapse()
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     connection_buckets_.push_back(Bucket());
 }

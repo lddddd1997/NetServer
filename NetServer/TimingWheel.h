@@ -21,7 +21,7 @@ public:
     ~ConnectionOnWheel();
 
 private:
-    TcpConnectionWPtr weak_connection_;
+    TcpConnectionWPtr weak_connection_; // 保存弱引用，如果保存强引用会导致连接主动关闭时不能立即释放
 };
 
 // https://www.cnblogs.com/Solstice/archive/2011/05/04/2036983.html
@@ -44,6 +44,7 @@ public:
     void TimeLapse(); // 定时处理，将轮子上过期的连接桶清除
 private:
     ConnectionBuckets connection_buckets_; // 连接桶
+    std::mutex mutex_; // 用户保护连接桶的更新
 };
 
 #endif
