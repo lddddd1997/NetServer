@@ -25,7 +25,7 @@ public:
 
 private:
     TcpServer tcp_server_;
-    TimingWheel timing_wheel_;
+    // TimingWheel timing_wheel_;
     void OnTimer();
     void MessageCallback(const TcpConnectionSPtr& connection, std::string& message);
     void WriteCompleteCallback(const TcpConnectionSPtr& connection);
