@@ -36,7 +36,7 @@ void Channel::EventsHandling()
         {
             std::cout << "Lack of close_handler_" << std::endl;
         }
-        // return ; // 对端关闭后，不处理其它事件
+        return ; // 对端关闭后，不处理其它事件，否则调用close_handler_清除tcp连接后还会处理写事件，造成非法访问内存，导致系统崩溃
     }
     if(revents_ & EPOLLERR)
     {
