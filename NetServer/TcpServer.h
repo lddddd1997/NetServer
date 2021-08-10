@@ -12,6 +12,7 @@
 #include "EventLoopThreadPool.h"
 #include "TcpConnection.h"
 #include "Socket.h"
+#include "TimingWheel.h"
 
 class TcpServer
 {
@@ -21,7 +22,7 @@ public:
     using Callback = std::function<void(const TcpConnectionSPtr&)>;
     using MessageCallback = std::function<void(const TcpConnectionSPtr&, std::string&)>;
 
-    TcpServer(EventLoop *basic_loop, int port, int threa_dnum);
+    TcpServer(EventLoop *basic_loop, int port, int thread_dnum, int idle_seconds);
     ~TcpServer();
 
     void Start();
@@ -65,12 +66,17 @@ private:
     Callback close_callback_; // 应用层关闭连接回调
     Callback error_callback_; // 应用层错误回调
 
-    static const int MAX_CONNECTION = 30000; // 限制最大连接数量
+    int idle_seconds_;
+    TimingWheel timing_wheel_; // 时间轮，定时剔除空闲连接
 
+    static const int MAX_CONNECTION = 30000; // 限制最大连接数量
+    
     void NewConnectionHandler(); // socket可读（有新连接）处理
     void ConnectionErrorHandler();
     void RemoveConnectionFromMap(const TcpConnectionSPtr& connection); // 客户端文件描述符断开处理，从连接表中删除该连接
     void RemoveConnectionInLoop(const TcpConnectionSPtr& connection); // 将删除任务投递到所在线程
+    void UpdateTimingWheel(const TcpConnectionSPtr& connection);
+    void CheckIdleConnection();
 };
 
 #endif

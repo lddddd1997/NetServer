@@ -124,6 +124,7 @@ void TcpConnection::ReadHandler()
     if(nread > 0)
     {
         message_callback_(shared_from_this(), buffer_in_);
+        update_callback_(shared_from_this()); // 更新Server层的时间轮
         // buffer_in_.clear();
     }
     else if(nread == 0) // 客户端关闭socket，FIN，设置了优先处理EPOLLRDHUP事件，不会发生该情况
