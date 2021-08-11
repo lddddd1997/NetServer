@@ -2,6 +2,8 @@
 * @file     ThreadPool.cpp
 * @brief    业务线程池
 * @author   lddddd (https://github.com/lddddd1997)
+* @par      bug fixed:
+*           2021.08.10，线程池中的task运行完后清除（置为nullptr），否则有些输入参数会一直绑定在此对象上不能释放
 */
 #include <iostream>
 #include "ThreadPool.h"
@@ -73,6 +75,7 @@ void ThreadPool::RunInThread(int thread_num)
             {
                 idle_thread_num_--; // 原子类型变量，无需加锁
                 task();
+                task = nullptr; // Fix bug:运行完后清除，否则有些输入参数会一直绑定在此对象上不能释放
                 idle_thread_num_++;
             }
             catch(const std::exception& ex)
