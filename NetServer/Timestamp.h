@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include <string>
 #include <sys/time.h>
-
+#include <iostream>
 class Timestamp
 {
 public:
@@ -31,6 +31,10 @@ public:
     time_t SecondsSinceEpoch() const
     {
         return static_cast<time_t>(micro_seconds_since_epoch_ / MICRO_SECONDS_PER_SECOND);
+    }
+    void Swap(Timestamp& that)
+    {
+        std::swap(micro_seconds_since_epoch_, that.micro_seconds_since_epoch_); // 可以直接访问that对象的私有属性，因为C++的限定符是限定类的，不是限定对象的
     }
 
     bool operator<(const Timestamp& rhs) const
