@@ -3,13 +3,14 @@
 * @brief    tcp客户端连接
 * @author   lddddd (https://github.com/lddddd1997)
 * @par      bug fixed:
-            2021.07.31，通过在handler内定义TcpConnectionSPtr prolong = shared_from_this()来延长本对象生命周期至handler调用结束
+*           2021.07.31，通过在handler内定义TcpConnectionSPtr prolong = shared_from_this()来延长本对象生命周期至handler调用结束
 */
 #include <unistd.h>
 #include <iostream>
 #include <assert.h>
 #include "Utilities.h"
 #include "TcpConnection.h"
+#include "Logger.h"
 
 TcpConnection::TcpConnection(EventLoop *loop, int fd,
                   const struct sockaddr_in& local_addr, const struct sockaddr_in& peer_addr) :
@@ -31,6 +32,10 @@ TcpConnection::~TcpConnection() // TcpConnection的shared_ptr对象引用计数�
 {
     // std::cout << "TcpConnection::~TcpConnection" << std::endl;
     // loop_->CommitTaskToLoop(std::bind(&EventLoop::RemoveChannelFromEpoller, loop_, &connection_channel_)); // 无需清除，close后epoll会自动删除，，man文档Q6
+    LOG_INFO << "Disconnected " << inet_ntoa(this->LocalAddress().sin_addr)
+            << ":" << ntohs(this->LocalAddress().sin_port)
+            << " from " << inet_ntoa(this->PeerAddress().sin_addr)
+            << ":" << ntohs(this->PeerAddress().sin_port);
     close(connection_channel_.Fd()); // 关闭该连接
     assert(disconnected_); // 确认是否已经关闭
 }
@@ -106,7 +111,7 @@ void TcpConnection::ShutdownInLoop()
     {
         return ;
     }
-    std::cout << "shutdown" << std::endl;
+    // std::cout << "shutdown" << std::endl;
     loop_->CommitTaskToLoop(std::bind(connection_cleanup_, shared_from_this())); // 上层Server层清理（从tcp连接表中删除，shared_ptr计数--）
     close_callback_(shared_from_this());
     disconnected_ = true;

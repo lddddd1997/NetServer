@@ -99,10 +99,10 @@ void TcpServer::ConnectionErrorHandler()
 void TcpServer::RemoveConnectionFromMap(const TcpConnectionSPtr& connection)
 {
     basic_loop_->CommitTaskToLoop(std::bind(&TcpServer::RemoveConnectionInLoop, this, connection)); // 投递到basic_loop_，解决线程安全问题
-    LOG_INFO << "Remove connection " << inet_ntoa(connection->LocalAddress().sin_addr)
-            << ":" << ntohs(connection->LocalAddress().sin_port)
-            << " from " << inet_ntoa(connection->PeerAddress().sin_addr)
-            << ":" << ntohs(connection->PeerAddress().sin_port);
+    // LOG_INFO << "Remove connection " << inet_ntoa(connection->LocalAddress().sin_addr)
+    //         << ":" << ntohs(connection->LocalAddress().sin_port)
+    //         << " from " << inet_ntoa(connection->PeerAddress().sin_addr)
+    //         << ":" << ntohs(connection->PeerAddress().sin_port); // 放在TcpConection的析构中，析构后才真正回收
 }
 
 void TcpServer::RemoveConnectionInLoop(const TcpConnectionSPtr& connection)
