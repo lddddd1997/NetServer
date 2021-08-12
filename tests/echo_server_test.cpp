@@ -1,5 +1,5 @@
-#include "EchoServer.h"
-#include "Logger.h"
+#include "../NetServer/EchoServer.h"
+#include "../NetServer/Logger.h"
 #include <iostream>
 using namespace std;
 
