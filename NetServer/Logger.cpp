@@ -97,7 +97,9 @@ void Logger::FormatFrontPart()
         t_time_buf[17] = '\0';
     }
     stream_ << t_time_buf;
-    stream_ << "." << micro_seconds << "Z ";
+    char ms_buf[16];
+    snprintf(ms_buf, sizeof(ms_buf), ".%06dZ ", micro_seconds);
+    stream_ << ms_buf;
     std::ostringstream oss; // 特别影响效率，待优化
     oss << std::this_thread::get_id();
     stream_ << oss.str() << " ";
