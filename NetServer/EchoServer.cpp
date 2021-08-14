@@ -6,7 +6,7 @@
 #include <iostream>
 #include "EchoServer.h"
 
-EchoServer::EchoServer(EventLoop *basic_loop, int port, int thread_num, int idle_seconds) :
+EchoServer::EchoServer(EventLoop *basic_loop, uint16_t port, int thread_num, int idle_seconds) :
     tcp_server_(basic_loop, port, thread_num, idle_seconds)
     // timing_wheel_(idle_seconds)
 {

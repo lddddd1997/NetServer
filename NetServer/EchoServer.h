@@ -14,7 +14,7 @@ class EchoServer
 public:
     using TcpConnectionSPtr = std::shared_ptr<TcpConnection>;
 
-    EchoServer(EventLoop *basic_loop, int port, int thread_num, int idle_seconds);
+    EchoServer(EventLoop *basic_loop, uint16_t port, int thread_num, int idle_seconds);
     ~EchoServer();
     
     void Start();
