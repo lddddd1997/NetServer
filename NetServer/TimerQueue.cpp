@@ -22,7 +22,7 @@ TimerQueue::TimerQueue(EventLoop *loop) :
         exit(EXIT_FAILURE);
     }
     timer_channel_.SetFd(timerfd);
-    timer_channel_.SetEvents(EPOLLIN | EPOLLET);
+    timer_channel_.SetEvents(EPOLLIN/* | EPOLLET*/);
     timer_channel_.SetReadHandler(std::bind(&TimerQueue::ExpiredReadHandler, this));
     loop_->CommitTaskToLoop(std::bind(&EventLoop::CommitChannelToEpoller, loop_, &timer_channel_)); // 将事件通知加入epoller中
 }
