@@ -2,6 +2,8 @@
 * @file     TcpServer.cpp
 * @brief    tcp服务器，管理tcp客户端的连接
 * @author   lddddd (https://github.com/lddddd1997)
+* @par      bug fixed:
+*           2021.08.13，使用一个空闲描述符来解决文件描述符超出限制的问题
 */
 #include <unistd.h>
 #include <cstring>
@@ -10,7 +12,7 @@
 #include "TcpServer.h"
 #include "Logger.h"
 
-TcpServer::TcpServer(EventLoop *basic_loop, int port, int thread_num, int idle_seconds) :
+TcpServer::TcpServer(EventLoop *basic_loop, uint16_t port, int thread_num, int idle_seconds) :
     basic_loop_(basic_loop),
     server_channel_("server"),
     event_loop_thread_pool_(basic_loop, thread_num),
@@ -28,7 +30,7 @@ TcpServer::TcpServer(EventLoop *basic_loop, int port, int thread_num, int idle_s
     server_socket_.SetListen();
 
     server_channel_.SetFd(server_socket_.Fd());
-    server_channel_.SetEvents(EPOLLIN | EPOLLET);
+    server_channel_.SetEvents(EPOLLIN/* | EPOLLET*/); // 电平触发
     server_channel_.SetReadHandler(std::bind(&TcpServer::NewConnectionHandler, this));
     server_channel_.SetErrorHandler(std::bind(&TcpServer::ConnectionErrorHandler, this));
 }
@@ -54,18 +56,21 @@ void TcpServer::NewConnectionHandler() // server_channel的EPOLLIN事件触发
 {
     struct sockaddr_in client_addr;
     int client_fd = 0;
-    while((client_fd = server_socket_.Accept(client_addr)) > 0) // 非阻塞处理
+    if((client_fd = server_socket_.Accept(client_addr)) > 0) // Fix bug:设置为水平触发,处理文件描述符打开数量超过系统限制的情况
     {
         if(connections_map_.size() >= MAX_CONNECTION)
         {
+            LOG_WARN << "Exceed the maximum number of simultaneous connections";
             close(client_fd);
-            continue;
         }
         Utilities::SetNonBlock(client_fd); // 设置非阻塞IO
         EventLoop *io_loop = event_loop_thread_pool_.GetNextLoop(); // 给新连接分配IO线程
         TcpConnectionSPtr new_connection = std::make_shared<TcpConnection>(io_loop, client_fd, client_addr, server_addr_);
         new_connection->SetMessageCallback(message_callback_);
-        new_connection->SetUpdateCallback(std::bind(&TcpServer::UpdateTimingWheel, this, std::placeholders::_1));
+        if(idle_seconds_ != 0)
+        {
+            new_connection->SetUpdateCallback(std::bind(&TcpServer::UpdateTimingWheel, this, std::placeholders::_1));
+        }
         new_connection->SetWriteCompleteCallback(write_complete_callback_);
         new_connection->SetCloseCallback(close_callback_);
         new_connection->SetErrorCallback(error_callback_);
@@ -76,22 +81,21 @@ void TcpServer::NewConnectionHandler() // server_channel的EPOLLIN事件触发
         //     connections_map_[client_fd] = new_connection;
         // }
         connections_map_[client_fd] = new_connection; // 加入hash map连接表中
+
+        // LOG_INFO << "New    connection " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port)
+        //         << " from " << inet_ntoa(server_addr_.sin_addr) << ":" << ntohs(server_addr_.sin_port)
+        //         << ", client count = " << connections_map_.size() << " client fd = " << client_fd;
         new_connection->ConnectEstablished(); // 初始化
-        timing_wheel_.CommitNewConnection(new_connection);
+        if(idle_seconds_ != 0)
+        {
+            timing_wheel_.CommitNewConnection(new_connection);
+        }
         connection_callback_(new_connection);
-        // std::cout << "New client connection, address = " << inet_ntoa(client_addr.sin_addr) << 
-        // ":" << ntohs(client_addr.sin_port) << " client count = " << connections_map_.size() << std::endl;
-        // std::cout << "Server, address = " << inet_ntoa(server_addr_.sin_addr) << 
-        // ":" << ntohs(server_addr_.sin_port) << " client_fd = " << client_fd << std::endl;
-        LOG_INFO << "New connection " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port)
-                << " from " << inet_ntoa(server_addr_.sin_addr) << ":" << ntohs(server_addr_.sin_port)
-                << " client count = " << connections_map_.size();
     }
 }
 
 void TcpServer::ConnectionErrorHandler()
 {
-    // std::cout << "connection error" << std::endl;
     LOG_ERROR << "Connection error";
     close(server_socket_.Fd());
 }
