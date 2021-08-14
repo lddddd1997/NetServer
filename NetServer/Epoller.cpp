@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <iostream>
 #include "Epoller.h"
+#include "Logger.h"
 
 Epoller::Epoller() :
     event_list_(EVENT_LIST_SIZE)
@@ -16,7 +17,6 @@ Epoller::Epoller() :
         perror("Epoller::Epoller");
         exit(EXIT_FAILURE);
     }
-    // std::cout << "epoll_create" << std::endl;
 }
 
 Epoller::~Epoller()
@@ -24,7 +24,7 @@ Epoller::~Epoller()
     close(epollfd_);
 }
 
-void Epoller::EpollWait(int timeout_ms, ChannelPtrList &active_channel_list)
+void Epoller::EpollWait(int timeout_ms, ChannelPtrList& active_channel_list)
 {
     int nfds = epoll_wait(epollfd_, &*event_list_.begin(), static_cast<int>(event_list_.size()), timeout_ms);
     if(nfds > 0)
@@ -77,7 +77,7 @@ void Epoller::RemoveChannelFromEpoller(Channel *channel)
 
 void Epoller::UpdateChannelInEpoller(Channel *channel)
 {
-int fd = channel->Fd();
+    int fd = channel->Fd();
     struct epoll_event evt;
     evt.events = channel->Events();
     evt.data.ptr = channel;
@@ -89,7 +89,7 @@ int fd = channel->Fd();
     }
 }
 
-void Epoller::FilleActiveChannels(int nfds, ChannelPtrList &active_channel_list)
+void Epoller::FilleActiveChannels(int nfds, ChannelPtrList& active_channel_list)
 {
     for(int i = 0; i < nfds; i++)
     {
