@@ -51,11 +51,11 @@ ssize_t Utilities::Readn(int fd, std::string& buffer_in)
             }
             else
             {
-                perror("Utilities::Readn");
+                // perror("Utilities::Readn");
                 return -1;
             }
         }
-        else if(nread == 0) // 客户端关闭socket，FIN，设置了EPOLLRDHUP事件，不会发生该情况
+        else if(nread == 0) // 客户端关闭socket，FIN
         {
             return 0;
         }
