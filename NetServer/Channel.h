@@ -8,6 +8,7 @@
 
 #include <functional>
 #include <string>
+#include <memory>
 
 class Channel
 {
@@ -57,14 +58,22 @@ public:
     {
         error_handler_ = cb;
     }
+    void Tie(const std::shared_ptr<void>& obj)
+    {
+        tie_ = obj;
+        tied_ = true;
+    }
 
-    void EventsHandling(); // 事件的处理
+    void EventsHandlingWithGuard(); // 事件的处理
 
 private:
     int fd_;
     uint32_t events_;
     uint32_t revents_;
     std::string name_;
+
+    bool tied_;
+    std::weak_ptr<void> tie_;
 
     EventHandler read_handler_; // 事件处理回调
     EventHandler write_handler_;
