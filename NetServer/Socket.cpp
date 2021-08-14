@@ -2,18 +2,24 @@
 * @file     Socket.cpp
 * @brief    socket封装
 * @author   lddddd (https://github.com/lddddd1997)
+* @par      bug fixed:
+*           2021.08.13，使用一个空闲描述符来解决文件描述符超出限制的问题
 */
 #include <netinet/tcp.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <cstring>
+#include <assert.h>
 #include <iostream>
 #include "Utilities.h"
 #include "Socket.h"
+#include "Logger.h"
 
 Socket::Socket()
 {
     sockfd_ = socket(AF_INET, SOCK_STREAM, 0);
-    if(sockfd_ == -1)
+    idlefd_ = open("/dev/null", O_RDONLY | O_CLOEXEC);
+    if(sockfd_ == -1 || idlefd_ == -1)
     {
         perror("Socket::Socket");
         exit(EXIT_FAILURE);
@@ -24,6 +30,7 @@ Socket::Socket()
 Socket::~Socket()
 {
     close(sockfd_);
+    close(idlefd_);
     std::cout << "socket close..." << std::endl;
 }
 
@@ -71,7 +78,7 @@ void Socket::SetNonblock()
     Utilities::SetNonBlock(sockfd_); // 设置非阻塞IO
 }
 
-void Socket::BindAddress(int port) // 绑定socket地址
+void Socket::BindAddress(uint16_t port) // 绑定socket地址
 {
     struct sockaddr_in server_addr;
     bzero(&server_addr, sizeof(server_addr));
@@ -105,24 +112,33 @@ void Socket::SetListen()
     }
 }
 
-int Socket::Accept(struct sockaddr_in &client_addr)
+int Socket::Accept(struct sockaddr_in& client_addr)
 {
     socklen_t addr_len = sizeof(client_addr);
     int connfd = accept(sockfd_, reinterpret_cast<struct sockaddr*>(&client_addr), &addr_len);
     if(connfd == -1)
     {
-        // perror("Socket::Accept");
+        // LOG_ERROR << "Resource temporarily unavailable";
         switch(errno)
         {
             case EAGAIN:
                 return 0;
+            case EMFILE: // 使用一个空闲文件描述符来解决文件描述符超出限制，导致无法服务端继续监听处理新的连接的问题
+            {
+                close(idlefd_);
+                idlefd_ = accept(sockfd_, nullptr, nullptr);
+                assert(idlefd_ >= 0);
+                close(idlefd_);
+                idlefd_ = open("/dev/null", O_RDONLY | O_CLOEXEC);
+                assert(idlefd_ >= 0);
+                // LOG_ERROR << "Too many open files";
+                // std::cout << "Too many open files" << std::endl;
+                return 0;
+            }
             case ECONNABORTED:
             case EINTR:
             case EPROTO:
             case EPERM:
-            case EMFILE:
-                // expected errors
-                break;
             case EBADF:
             case EFAULT:
             case EINVAL:
@@ -132,7 +148,7 @@ int Socket::Accept(struct sockaddr_in &client_addr)
             case ENOTSOCK:
             case EOPNOTSUPP:
                 // unexpected errors
-                // std::cout << "unexpected error of ::accept " << std::endl;
+                std::cout << "unexpected error of ::accept " << std::endl;
                 break;
             default:
                 // std::cout << "unknown error of ::accept " << std::endl;
