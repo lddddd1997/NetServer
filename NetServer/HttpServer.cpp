@@ -26,7 +26,7 @@ HttpServer::~HttpServer()
 void HttpServer::Start()
 {
     LOG_INFO << "Http server start";
-    // Logger().EnableAsyncLogging("http", 5 * 1024 * 1024);
+    // Logger().EnableAsyncLogging("http", 100 * 1024 * 1024);
     tcp_server_.Start();
     worker_thread_pool_.Start();
 }
@@ -35,7 +35,7 @@ void HttpServer::OnMessage(const TcpConnectionSPtr& connection, std::string& mes
 {
     if(worker_thread_pool_.ThreadsCount() > 0)
     {
-        worker_thread_pool_.CommitTaskToPool([connection, &message]() // 值捕获，延长连接的生命周期（因为有可能在线程池执行任务时，连接会被关闭）
+        worker_thread_pool_.CommitTaskToPool([this, connection, &message]() // 值捕获，延长连接的生命周期（因为有可能在线程池执行任务时，连接会被关闭）
         {
             OnRequestProcessing(connection, message);
         });
@@ -70,7 +70,7 @@ void HttpServer::OnRequestProcessing(const TcpConnectionSPtr& connection, std::s
 {
     std::string msg;
     msg.swap(message);
-    // std::cout << msg << std::endl;
+    // LOG_DEBUG << msg;
     HttpContext http_context;
     if(!http_context.ParseRequest(msg, Timestamp::Now())) // 解析消息
     {
@@ -132,6 +132,7 @@ void HttpServer::OnRequestProcessing(const TcpConnectionSPtr& connection, std::s
         }
         std::string output;
         http_response.AppendToSendBuffer(output);
+        // LOG_DEBUG << output;
         connection->Send(output); // 处理完成，投递到连接所处的io线程
         if(http_response.CloseConnection())
         {
