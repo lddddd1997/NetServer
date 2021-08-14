@@ -13,12 +13,15 @@
 #include "Channel.h"
 #include "EventLoop.h"
 
+class ConnectionOnWheel;
+
 class TcpConnection : public std::enable_shared_from_this<TcpConnection>
 {
 public:
     using TcpConnectionSPtr = std::shared_ptr<TcpConnection>;
     using Callback = std::function<void(const TcpConnectionSPtr&)>;
     using MessageCallback = std::function<void(const TcpConnectionSPtr&, std::string&)>;
+    using ConnectionOnWheelWPtr = std::weak_ptr<ConnectionOnWheel>;
 
     TcpConnection(EventLoop *loop, int fd,
                   const struct sockaddr_in& local_addr, const struct sockaddr_in& peer_addr);
@@ -37,11 +40,11 @@ public:
     {
         return loop_;
     }
-    void SetContext(const boost::any& context)
+    void SetContext(const ConnectionOnWheelWPtr& context)
     {
         context_ = context;
     }
-    const boost::any& Context() const
+    ConnectionOnWheelWPtr Context() const
     {
         return context_;
     }
@@ -49,9 +52,21 @@ public:
     {
         return local_addr_;
     }
+    std::string LocalAddressToString() const
+    {
+        char buf[32] = {0};
+        snprintf(buf, sizeof(buf), "%s:%u", inet_ntoa(local_addr_.sin_addr), ntohs(local_addr_.sin_port));
+        return buf;
+    }
     struct sockaddr_in PeerAddress() const
     {
         return peer_addr_;
+    }
+    std::string PeerAddressToString() const
+    {
+        char buf[32] = {0};
+        snprintf(buf, sizeof(buf), "%s:%u", inet_ntoa(peer_addr_.sin_addr), ntohs(peer_addr_.sin_port));
+        return buf;
     }
     void SetMessageCallback(const MessageCallback &cb)
     {
@@ -87,7 +102,7 @@ private:
     // int fd_;
     EventLoop *loop_;
     Channel connection_channel_;
-    boost::any context_;
+    ConnectionOnWheelWPtr context_;
     const struct sockaddr_in local_addr_; // 客户端的socket地址
     const struct sockaddr_in peer_addr_; // 服务端的socket地址
     std::string buffer_in_; // 接收缓冲区
