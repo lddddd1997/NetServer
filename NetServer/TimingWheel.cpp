@@ -7,6 +7,7 @@
 #include <iostream>
 #include <assert.h>
 #include "TimingWheel.h"
+#include "Logger.h"
 
 ConnectionOnWheel::ConnectionOnWheel(const TcpConnectionWPtr& weak_conn) :
     weak_connection_(weak_conn)
@@ -19,6 +20,7 @@ ConnectionOnWheel::~ConnectionOnWheel() // 时间轮上的Tcp连接的引用计�
     TcpConnectionSPtr connection = weak_connection_.lock();
     if(connection != nullptr)
     {
+        // LOG_DEBUG << "It is time to shutdown connection" << connection->LocalAddressToString();
         connection->Shutdown(); // 主动关闭连接
     }
 }
@@ -44,21 +46,23 @@ void TimingWheel::CommitNewConnection(const TcpConnectionSPtr& sp_tcp_connection
 {
     if(sp_tcp_connection->Connected())
     {
-        std::lock_guard<std::mutex> lock(mutex_);
         ConnectionOnWheelSPtr sp_connection_on_wheel(new ConnectionOnWheel(sp_tcp_connection));
-        connection_buckets_.back().insert(sp_connection_on_wheel); // 插入到最后一个桶
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            connection_buckets_.back().insert(sp_connection_on_wheel); // 插入到最后一个桶
+        }
         ConnectionOnWheelWPtr wp_connection_on_wheel(sp_connection_on_wheel);
         sp_tcp_connection->SetContext(wp_connection_on_wheel);
     }
     else
     {
-        std::cout << "Connection not established" << std::endl;
+        std::cout << "Connection is not established" << std::endl;
     }
 }
 
 void TimingWheel::Update(const TcpConnectionSPtr& sp_tcp_connection) // 更新连接
 {
-    ConnectionOnWheelWPtr wp_connection_on_wheel(boost::any_cast<ConnectionOnWheelWPtr>(sp_tcp_connection->Context()));
+    ConnectionOnWheelWPtr wp_connection_on_wheel(sp_tcp_connection->Context());
     ConnectionOnWheelSPtr sp_connection_on_wheel(wp_connection_on_wheel.lock());
     if(sp_connection_on_wheel != nullptr)
     {
