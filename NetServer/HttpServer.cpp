@@ -26,7 +26,6 @@ HttpServer::~HttpServer()
 void HttpServer::Start()
 {
     LOG_INFO << "Http server start";
-    // Logger().EnableAsyncLogging("http", 100 * 1024 * 1024);
     tcp_server_.Start();
     worker_thread_pool_.Start();
 }

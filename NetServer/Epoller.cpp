@@ -41,7 +41,8 @@ void Epoller::EpollWait(int timeout_ms, ChannelPtrList& active_channel_list)
     }
     else
     {
-        perror("Epoller::EpollWait");
+        // perror("Epoller::EpollWait");
+        LOG_ERROR << "Epoller::EpollWait";
         // exit(EXIT_FAILURE);
     }
 
@@ -56,8 +57,9 @@ void Epoller::CommitChannelToEpoller(Channel *channel)
     channel_map_[fd] = channel;
     if(epoll_ctl(epollfd_, EPOLL_CTL_ADD, fd, &evt) == -1)
     {
-        perror("Epoller::CommitChannel");
-        exit(EXIT_FAILURE);
+        // perror("Epoller::CommitChannel");
+        LOG_ERROR << "Epoller::CommitChannel";
+        // exit(EXIT_FAILURE);
     }
 }
 
@@ -70,8 +72,9 @@ void Epoller::RemoveChannelFromEpoller(Channel *channel)
     channel_map_.erase(fd);
     if(epoll_ctl(epollfd_, EPOLL_CTL_DEL, fd, &evt) == -1)
     {
-        perror("Epoller::RemoveChannel");
-        exit(EXIT_FAILURE);
+        // perror("Epoller::RemoveChannel");
+        LOG_ERROR << "Epoller::RemoveChannel";
+        // exit(EXIT_FAILURE);
     }
 }
 
@@ -84,8 +87,9 @@ void Epoller::UpdateChannelInEpoller(Channel *channel)
 
     if(epoll_ctl(epollfd_, EPOLL_CTL_MOD, fd, &evt) == -1)
     {
-        perror("Epoller::UpdateChannel");
-        exit(EXIT_FAILURE);
+        // perror("Epoller::UpdateChannel");
+        LOG_ERROR << "Epoller::UpdateChannel";
+        // exit(EXIT_FAILURE);
     }
 }
 

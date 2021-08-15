@@ -7,6 +7,7 @@
 #include <sys/eventfd.h>
 #include <iostream>
 #include "EventLoop.h"
+#include "Logger.h"
 
 EventLoop::EventLoop(const std::string& name) :
     looping_(false),
@@ -92,7 +93,8 @@ void EventLoop::Wakeup()
     ssize_t n = write(wakeupfd_, &one, sizeof(one));
     if(n != sizeof(one))
     {
-        perror("EventLoop::Wakeup");
+        // perror("EventLoop::Wakeup");
+        LOG_ERROR << "EventLoop::Wakeup";
     }
 }
 
@@ -102,7 +104,8 @@ void EventLoop::WakeupReadHandler()
     ssize_t n = read(wakeupfd_, &one, sizeof(one));
     if(n != sizeof(one))
     {
-        perror("EventLoop::Wakeup");
+        // perror("EventLoop::WakeupReadHandler");
+        LOG_ERROR << "EventLoop::WakeupReadHandler";
     }
 }
 

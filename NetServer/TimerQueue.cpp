@@ -10,6 +10,7 @@
 #include <iostream>
 #include "TimerQueue.h"
 #include "EventLoop.h"
+#include "Logger.h"
 
 TimerQueue::TimerQueue(EventLoop *loop) :
     loop_(loop),
@@ -70,8 +71,9 @@ void TimerQueue::ResetTimerFd(Timestamp expiration)
     new_val.it_value = HowMuchTimeFromNow(expiration);
     if(timerfd_settime(timer_channel_.Fd(), 0, &new_val, &old_val) < 0)
     {
-        perror("TimerQueue::ResetTimerFd");
-        exit(EXIT_FAILURE);
+        // perror("TimerQueue::ResetTimerFd");
+        LOG_ERROR << "TimerQueue::ResetTimerFd";
+        // exit(EXIT_FAILURE);
     }
 }
 
@@ -129,7 +131,8 @@ void TimerQueue::ExpiredReadHandler()
     ssize_t n = ::read(timer_channel_.Fd(), &howmany, sizeof(howmany));
     if(n != sizeof(howmany))
     {
-        perror("TimerQueue::ExpiredReadHandler");
+        // perror("TimerQueue::ExpiredReadHandler");
+        LOG_ERROR << "TimerQueue::ExpiredReadHandler";
     }
 
     ExpiredList expired = GetExpiredTimers(now);

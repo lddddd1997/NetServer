@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include "Utilities.h"
+#include "Logger.h"
 
 Utilities::Utilities()
 {
@@ -52,6 +53,7 @@ ssize_t Utilities::Readn(int fd, std::string& buffer_in)
             else
             {
                 // perror("Utilities::Readn");
+                LOG_ERROR << "Utilities::Readn";
                 return -1;
             }
         }
@@ -87,7 +89,8 @@ ssize_t Utilities::Writen(int fd, std::string& buffer_out)
                 }
                 else
                 {
-                    perror("Utilities::Writen");
+                    // perror("Utilities::Writen");
+                    LOG_ERROR << "Utilities::Writen";
                     return -1;
                 }
             }
