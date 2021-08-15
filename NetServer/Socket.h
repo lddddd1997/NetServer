@@ -29,6 +29,7 @@ public:
     void BindAddress(uint16_t port); // 绑定socket地址
     void BindAddress(const struct sockaddr_in& addr); // 绑定socket地址
     void SetListen(); // 设置最大同时等待连接数
+    static int GetSocketError(int sockfd); // 获取套接字错误
     int Accept(struct sockaddr_in &client_addr); // accept封装
 private:
     int sockfd_; // socket文件描述符

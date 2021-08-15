@@ -112,6 +112,21 @@ void Socket::SetListen()
     }
 }
 
+int Socket::GetSocketError(int sockfd)
+{
+    int optval;
+    socklen_t optlen = static_cast<socklen_t>(sizeof(optval));
+
+    if(getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &optval, &optlen) < 0)
+    {
+        return errno;
+    }
+    else
+    {
+        return optval;
+    }
+}
+
 int Socket::Accept(struct sockaddr_in& client_addr)
 {
     socklen_t addr_len = sizeof(client_addr);
