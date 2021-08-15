@@ -85,7 +85,8 @@ void TcpServer::NewConnectionHandler() // server_channel的EPOLLIN事件触发
         // LOG_INFO << "New    connection " << inet_ntoa(client_addr.sin_addr) << ":" << ntohs(client_addr.sin_port)
         //         << " from " << inet_ntoa(server_addr_.sin_addr) << ":" << ntohs(server_addr_.sin_port)
         //         << ", client count = " << connections_map_.size() << " client fd = " << client_fd;
-        new_connection->ConnectEstablished(); // 初始化
+        // new_connection->ConnectEstablished(); // 初始化
+        io_loop->CommitTaskToLoop(std::bind(&TcpConnection::ConnectEstablished, new_connection));
         if(idle_seconds_ != 0)
         {
             timing_wheel_.CommitNewConnection(new_connection);
