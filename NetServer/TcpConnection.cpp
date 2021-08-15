@@ -56,6 +56,10 @@ void TcpConnection::ConnectEstablished() // basic_loop线程接收新连接后�
     connection_channel_.Tie(shared_from_this()); // fix bug:由于channel回调函数绑定的是this指针,可能存在回调时连接已关闭的情况
     loop_->CommitTaskToLoop(std::bind(&EventLoop::CommitChannelToEpoller, loop_, &connection_channel_)); // 故加入任务队列，由loop_线程执行添加，此时loop_必定不会处于epoll_wait
     disconnected_ = false;
+    if(commit_callback_)
+    {
+        commit_callback_(shared_from_this()); // 更新Server层的时间轮
+    }
 }
 
 void TcpConnection::Send(const std::string& str)

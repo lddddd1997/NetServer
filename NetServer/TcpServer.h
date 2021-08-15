@@ -75,6 +75,7 @@ private:
     void ConnectionErrorHandler();
     void RemoveConnectionFromMap(const TcpConnectionSPtr& connection); // 客户端文件描述符断开处理，从连接表中删除该连接
     void RemoveConnectionInLoop(const TcpConnectionSPtr& connection); // 将删除任务投递到所在线程
+    void CommitNewConnectionToTimingWheel(const TcpConnectionSPtr& connection);
     void UpdateTimingWheel(const TcpConnectionSPtr& connection);
     void CheckIdleConnection();
 };

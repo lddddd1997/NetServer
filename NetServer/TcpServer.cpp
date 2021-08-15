@@ -70,6 +70,7 @@ void TcpServer::NewConnectionHandler() // server_channel的EPOLLIN事件触发
         if(idle_seconds_ != 0)
         {
             new_connection->SetUpdateCallback(std::bind(&TcpServer::UpdateTimingWheel, this, std::placeholders::_1));
+            new_connection->SetCommitCallback(std::bind(&TcpServer::CommitNewConnectionToTimingWheel, this, std::placeholders::_1));
         }
         new_connection->SetWriteCompleteCallback(write_complete_callback_);
         new_connection->SetCloseCallback(close_callback_);
@@ -87,10 +88,6 @@ void TcpServer::NewConnectionHandler() // server_channel的EPOLLIN事件触发
         //         << ", client count = " << connections_map_.size() << " client fd = " << client_fd;
         // new_connection->ConnectEstablished(); // 初始化
         io_loop->CommitTaskToLoop(std::bind(&TcpConnection::ConnectEstablished, new_connection));
-        if(idle_seconds_ != 0)
-        {
-            timing_wheel_.CommitNewConnection(new_connection);
-        }
         connection_callback_(new_connection);
     }
 }
@@ -114,6 +111,11 @@ void TcpServer::RemoveConnectionInLoop(const TcpConnectionSPtr& connection)
 {
     // std::lock_guard<std::mutex> lock(mutex_); // 投递到basic_loop_，不用上锁
     connections_map_.erase(connection->Fd());
+}
+
+void TcpServer::CommitNewConnectionToTimingWheel(const TcpConnectionSPtr& connection)
+{
+    timing_wheel_.CommitNewConnection(connection);
 }
 
 void TcpServer::UpdateTimingWheel(const TcpConnectionSPtr& connection)

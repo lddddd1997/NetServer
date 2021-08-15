@@ -76,6 +76,10 @@ public:
     {
         update_callback_ = cb;
     }
+    void SetCommitCallback(const Callback &cb)
+    {
+        commit_callback_ = cb;
+    }
     void SetWriteCompleteCallback(const Callback &cb)
     {
         write_complete_callback_ = cb;
@@ -110,6 +114,7 @@ private:
     
     MessageCallback message_callback_; // 应用层消息回调
     Callback update_callback_; // 收到消息后更新时间轮
+    Callback commit_callback_; // 连接建立后提交新连接到时间轮
     Callback write_complete_callback_; // 应用层写完回调
     Callback close_callback_; // 应用层关闭连接回调
     Callback error_callback_; // 应用层错误回调
