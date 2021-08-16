@@ -34,6 +34,7 @@ void HttpServer::OnMessage(const TcpConnectionSPtr& connection, std::string& mes
 {
     if(worker_thread_pool_.ThreadsCount() > 0)
     {
+        // TODO:fix bug线程池处理中的message存在线程安全
         worker_thread_pool_.CommitTaskToPool([this, connection, &message]() // 值捕获，延长连接的生命周期（因为有可能在线程池执行任务时，连接会被关闭）
         {
             OnRequestProcessing(connection, message);
