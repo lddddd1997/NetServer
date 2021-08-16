@@ -195,13 +195,13 @@ void TcpConnection::CloseHandler()
     {
         return ;
     }
+    disconnected_ = true;
     connection_channel_.SetEvents(0);
     loop_->CommitTaskToLoop(std::bind(&EventLoop::UpdateChannelInEpoller, loop_, &connection_channel_)); // fix bug:设置不再监听该channel，否则有可能在调用析构函数时还会触发事件
     loop_->CommitTaskToLoop(std::bind(&EventLoop::RemoveChannelFromEpoller, loop_, &connection_channel_));
     TcpConnectionSPtr prolong = shared_from_this(); // 延长本对象的生命周期至该函数调用结束
     loop_->CommitTaskToLoop(std::bind(connection_cleanup_, prolong)); // 交给TcpServer，从connections_map_中删除
     close_callback_(prolong);
-    disconnected_ = true;
 }
 
 void TcpConnection::ErrorHandler()
