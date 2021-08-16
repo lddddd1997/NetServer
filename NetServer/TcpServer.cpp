@@ -62,6 +62,7 @@ void TcpServer::NewConnectionHandler() // server_channel的EPOLLIN事件触发
         {
             LOG_WARN << "Exceed the maximum number of simultaneous connections";
             close(client_fd);
+            return ;
         }
         Utilities::SetNonBlock(client_fd); // 设置非阻塞IO
         EventLoop *io_loop = event_loop_thread_pool_.GetNextLoop(); // 给新连接分配IO线程
