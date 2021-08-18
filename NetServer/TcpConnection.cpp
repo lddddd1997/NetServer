@@ -207,5 +207,5 @@ void TcpConnection::CloseHandler()
 void TcpConnection::ErrorHandler()
 {
     int err = Socket::GetSocketError(connection_channel_.Fd());
-    LOG_ERROR << '[' << LocalAddressToString() << "] -SO_ERROR = " << err << ", " << strerror(err);
+    LOG_ERROR << '[' << LocalAddressToString() << "] -SO_ERROR = " << err << ", " << strerror(err); // 继续write会触发SIGPIPE
 }
