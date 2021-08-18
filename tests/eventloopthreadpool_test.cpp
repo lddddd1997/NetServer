@@ -1,10 +1,31 @@
-#include <EventLoopThreadPool.h>
+#include "../NetServer/EventLoopThreadPool.h"
 #include <iostream>
 #include <unistd.h>
 #include <assert.h>
 using namespace std;
 
-//g++ eventloopthreadpool_test.cpp EventLoopThreadPool.cpp EventLoopThread.cpp EventLoop.cpp Channel.cpp Epoller.cpp -I . -pthread
+// g++ eventloopthreadpool_test.cpp ../obj/*.o -pthread
+
+// /usr/bin/valgrind --tool=memcheck --leak-check=full --log-file=log.txt ./a.out
+
+/*
+==7011== Memcheck, a memory error detector
+==7011== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==7011== Using Valgrind-3.13.0 and LibVEX; rerun with -h for copyright info
+==7011== Command: ./a.out
+==7011== Parent PID: 2846
+==7011== 
+==7011== 
+==7011== HEAP SUMMARY:
+==7011==     in use at exit: 0 bytes in 0 blocks
+==7011==   total heap usage: 152 allocs, 152 frees, 80,192 bytes allocated
+==7011== 
+==7011== All heap blocks were freed -- no leaks are possible
+==7011== 
+==7011== For counts of detected and suppressed errors, rerun with: -v
+==7011== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+*/
+
 void print(EventLoop *p = nullptr)
 {
     printf("print: pid = %d, tid = %ld, loop = %p\n",
@@ -13,7 +34,7 @@ void print(EventLoop *p = nullptr)
 
 int main()
 {
-    EventLoop basic_loop;
+    EventLoop basic_loop("basic loop");
     {
         EventLoopThreadPool Pool(&basic_loop, 0);
         Pool.Start();
@@ -26,7 +47,7 @@ int main()
     }
 
     {
-        EventLoop basic_loop;
+        EventLoop basic_loop("basic loop");
         EventLoopThreadPool Pool(&basic_loop, 3);
         Pool.Start();
         EventLoop *loop = Pool.GetNextLoop();
