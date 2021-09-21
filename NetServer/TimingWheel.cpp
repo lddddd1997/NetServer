@@ -61,7 +61,7 @@ void TimingWheel::CommitNewConnection(const TcpConnectionSPtr& sp_tcp_connection
 void TimingWheel::Update(const TcpConnectionSPtr& sp_tcp_connection) // 更新连接
 {
     ConnectionOnWheelWPtr wp_connection_on_wheel(sp_tcp_connection->Context());
-    ConnectionOnWheelSPtr sp_connection_on_wheel(wp_connection_on_wheel.lock()); // 注：指向同一个地址的不同shared_ptr对象不会重复插入到unordered_set，可能与哈希表对智能指针的哈希方式有关（猜测hash的是所指向指针的地址）
+    ConnectionOnWheelSPtr sp_connection_on_wheel(wp_connection_on_wheel.lock()); // 注：指向同一个地址的不同shared_ptr对象不会重复插入到unordered_set，可能与哈希表对智能指针的哈希方式有关（猜测hash的是所指向指针的地址）。在之前的版本，hash_value会隐式转化为bool，导致unordered_map会退化成链表，待验证
     if(sp_connection_on_wheel != nullptr)
     {
         std::lock_guard<std::mutex> lock(mutex_);
