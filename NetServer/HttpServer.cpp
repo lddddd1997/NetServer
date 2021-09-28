@@ -104,7 +104,7 @@ void HttpServer::OnRequestProcessing(const TcpConnectionSPtr& connection, std::s
             http_response.SetContentType("text/html");
             http_response.AddHeader("Server", "lddddd");
             http_response.SetBody("<html><head><title>This is title</title></head>"
-                                    "<body><h1>Hello</h1>Now is " +
+                                    "<body><h1>Hello</h1>" + connection->PeerAddressToString() + ", now is " +
                                     Timestamp::Now().ToFormattedString() +
                                     "</body></html>");
         }
